@@ -1,9 +1,13 @@
 import requests
 import time
 import psutil
+import socket  # ✅ added for device name
 
 # Flask server URL
-URL = "http://127.0.0.1:5000/energy"
+URL = "https://green-computing-project.onrender.com/energy"
+
+# Get device name
+device_name = socket.gethostname()
 
 # ⏱️ Start time for calculating runtime hours
 start_time = time.time()
@@ -19,11 +23,12 @@ while True:
         # ⏱️ REAL RUNNING HOURS
         hours = (time.time() - start_time) / 3600
 
-        # ⏱️ IDLE TIME IN HOURS (converted from % approximation)
+        # ⏱️ IDLE TIME IN HOURS
         idle_hours = hours * (cpu_times.idle / 100)
 
         # Data packet sent to Flask
         data = {
+            "device": device_name,  # ✅ added
             "cpu_usage": cpu_usage,
             "hours": hours,
             "active_time": cpu_times.user + cpu_times.system,
@@ -33,6 +38,7 @@ while True:
         # Send request to server
         response = requests.post(URL, json=data, timeout=5)
 
+        print("Device:", device_name)
         print("Sent:", data)
 
         # Safe response handling
@@ -44,7 +50,7 @@ while True:
         print("-" * 40)
 
     except requests.exceptions.ConnectionError:
-        print("❌ Server not running")
+        print("❌ Server not reachable")
 
     except requests.exceptions.Timeout:
         print("❌ Request timed out")
