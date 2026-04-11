@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, session
 import sqlite3
 from energy import process_data
-from energy_db import save_to_db
+from energy_db import init_db, save_to_db, get_latest
 
 app = Flask(__name__)
 app.secret_key = "greencomputing123"
@@ -135,4 +135,5 @@ def check_login():
 
 # ---------------- RUN SERVER ----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    init_db()
+    app.run(host="0.0.0.0", port=10000)
