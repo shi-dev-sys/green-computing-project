@@ -1,36 +1,23 @@
-import sqlite3
-
-def save_to_db(data):
-    conn = sqlite3.connect("data.db")
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
-    # ✅ Updated table with device column
+    # ❗ DROP OLD TABLE (IMPORTANT FIX)
+    c.execute("DROP TABLE IF EXISTS energy_data")
+
     c.execute("""
-    CREATE TABLE IF NOT EXISTS energy_data (
-        device TEXT,
+    CREATE TABLE energy_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        time TEXT,
         cpu REAL,
         power REAL,
         energy REAL,
         co2 REAL,
         active_time REAL,
         idle_time REAL,
-        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        device TEXT
     )
     """)
-
-    # ✅ Insert data including device
-    c.execute("""
-    INSERT INTO energy_data (device, cpu, power, energy, co2, active_time, idle_time)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        data["device"],
-        data["cpu_usage"],
-        data["power_watts"],
-        data["energy_kwh"],
-        data["co2_kg"],
-        data["active_time"],
-        data["idle_time"]
-    ))
 
     conn.commit()
     conn.close()
