@@ -135,6 +135,8 @@ async function login() {
 
     const data = await res.json();
 
+    console.log("Login response:", data);  // 👈 IMPORTANT
+
     if (data.status === "success") {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
@@ -145,7 +147,6 @@ async function login() {
         document.getElementById("loginMsg").innerText = "Invalid credentials";
     }
 }
-
 // ---------------- LOGOUT ----------------
 async function logout() {
     await fetch("/logout");
