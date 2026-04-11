@@ -5,143 +5,48 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        body {
-            font-family: Arial;
-            background: #f2f6ff;
-            text-align: center;
-        }
-
-        h1 {
-            color: #2c3e50;
-        }
-
-        #loginBox {
-            margin-top: 100px;
-        }
-
-        input {
-            padding: 10px;
-            margin: 5px;
-            width: 200px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-        }
-
-        #loginBtn {
-            background: green;
-            color: white;
-        }
-
-        #dashboard {
-            display: none;
-            position: relative;
-            padding-top: 50px;
-        }
-
-        .card {
-            background: white;
-            padding: 15px;
-            margin: 10px;
-            width: 300px;
-            display: inline-block;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px #ccc;
-        }
-
-        #alertBox {
-            color: red;
-            font-weight: bold;
-            margin: 10px;
-        }
-
-        #logoutBtn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: red;
-            color: white;
-            border-radius: 5px;
-        }
-
-        canvas {
-            margin-top: 20px;
-        }
-    </style>
 </head>
 
 <body>
 
-<h1>🌱 Green Computing System</h1>
-
-<!-- 🔐 LOGIN -->
+<!-- ================= LOGIN ================= -->
 <div id="loginBox">
     <h2>Admin Login</h2>
 
-    <input id="username" placeholder="Username"><br>
+    <input id="username" placeholder="Username"><br><br>
     <input id="password" type="password" placeholder="Password"><br><br>
 
-    <button id="loginBtn" onclick="login()">Login</button>
+    <button onclick="login()">Login</button>
 
     <p id="loginMsg"></p>
 </div>
 
-<!-- 📊 DASHBOARD -->
-<div id="dashboard">
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard" style="display:none;">
 
-    <!-- 🔴 LOGOUT BUTTON -->
-    <button id="logoutBtn" onclick="logout()">Logout</button>
+    <h1>Green Computing Dashboard</h1>
 
-    <h2>Live Dashboard</h2>
+    <!-- ✅ DEVICE -->
+    <h3>Device: <span id="device"></span></h3>
 
-    <div id="alertBox"></div>
+    <h3>CPU Usage: <span id="cpu"></span>%</h3>
+    <h3>Power: <span id="power"></span> W</h3>
+    <h3>Energy: <span id="energy"></span> kWh</h3>
+    <h3>CO2: <span id="co2"></span> kg</h3>
 
-    <div class="card">
-        <h3>CPU Usage</h3>
-        <p id="cpu">--</p>
-    </div>
+    <button onclick="logout()">Logout</button>
 
-    <div class="card">
-        <h3>Power</h3>
-        <p id="power">--</p>
-    </div>
-
-    <div class="card">
-        <h3>Energy</h3>
-        <p id="energy">--</p>
-    </div>
-
-    <div class="card">
-        <h3>CO₂</h3>
-        <p id="co2">--</p>
-    </div>
-
-    <div class="card">
-        <h3>Active Time</h3>
-        <p id="active">--</p>
-    </div>
-
-    <div class="card">
-        <h3>Idle Time</h3>
-        <p id="idle">--</p>
-    </div>
-
-    <h3>📊 Energy Graph</h3>
-    <canvas id="energyChart"></canvas>
+    <!-- GRAPH -->
+    <canvas id="energyChart" width="400" height="200"></canvas>
 
 </div>
 
-<!-- ================= JS ================= -->
+<!-- ================= JAVASCRIPT ================= -->
 <script>
 
 let chart;
 
-// 🔐 LOGIN
+// ---------------- LOGIN ----------------
 async function login() {
     const res = await fetch("/login", {
         method: "POST",
@@ -157,13 +62,19 @@ async function login() {
     if (data.status === "success") {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
-        startDashboard();
+        loadGraph();
     } else {
         document.getElementById("loginMsg").innerText = "Invalid credentials";
     }
 }
 
-// 🔐 AUTO LOGIN CHECK
+// ---------------- LOGOUT ----------------
+async function logout() {
+    await fetch("/logout");
+    location.reload();
+}
+
+// ---------------- AUTO LOGIN CHECK ----------------
 window.onload = async function () {
     const res = await fetch("/check_login");
     const data = await res.json();
@@ -171,77 +82,50 @@ window.onload = async function () {
     if (data.logged_in) {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
-        startDashboard();
+        loadGraph();
     }
 };
 
-// 🚪 LOGOUT
-async function logout() {
-    await fetch("/logout");
+// ---------------- LIVE DATA ----------------
+async function fetchData() {
+    const response = await fetch("/live");
+    const data = await response.json();
 
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById("loginBox").style.display = "block";
-
-    document.getElementById("loginMsg").innerText = "Logged out successfully";
+    document.getElementById("device").innerText = data.device;
+    document.getElementById("cpu").innerText = data.cpu_usage;
+    document.getElementById("power").innerText = data.power_watts;
+    document.getElementById("energy").innerText = data.energy_kwh;
+    document.getElementById("co2").innerText = data.co2_kg;
 }
 
-// 📊 DASHBOARD LOGIC
-function startDashboard() {
+// refresh every 2 seconds
+setInterval(fetchData, 2000);
 
-    async function fetchData() {
-        const res = await fetch("/live");
-        const data = await res.json();
+// initial load
+fetchData();
 
-        document.getElementById("cpu").innerText = data.cpu_usage;
-        document.getElementById("power").innerText = data.power_watts;
-        document.getElementById("energy").innerText = data.energy_kwh;
-        document.getElementById("co2").innerText = data.co2_kg;
-        document.getElementById("active").innerText = data.active_time;
-        document.getElementById("idle").innerText = data.idle_time;
 
-        // ALERT SYSTEM
-        if (data.co2_kg > 0.15) {
-            document.getElementById("alertBox").innerText =
-                "⚠ HIGH CO₂ EMISSION!";
-        } else {
-            document.getElementById("alertBox").innerText = "";
+// ---------------- GRAPH ----------------
+async function loadGraph() {
+    const res = await fetch("/graph");
+    const data = await res.json();
+
+    const ctx = document.getElementById("energyChart").getContext("2d");
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: "Energy (kWh)",
+                data: data.values,
+                borderWidth: 2
+            }]
         }
-    }
-
-    async function loadGraph() {
-        const res = await fetch("/graph");
-        const data = await res.json();
-
-        const ctx = document.getElementById("energyChart");
-
-        if (chart) chart.destroy();
-
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Energy (kWh)',
-                    data: data.values,
-                    borderColor: 'green',
-                    fill: true,
-                    tension: 0.3
-                }]
-            }
-        });
-    }
-
-    setInterval(() => {
-        fetchData();
-        loadGraph();
-    }, 3000);
-
-    fetchData();
-    loadGraph();
+    });
 }
 
 </script>
 
 </body>
 </html>
-
