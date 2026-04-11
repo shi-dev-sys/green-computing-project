@@ -3,58 +3,87 @@
 <head>
     <title>Green Computing Dashboard</title>
 
-    <!-- Chart.js CDN -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- ================= STYLE ================= -->
     <style>
         body {
-            font-family: Arial;
+            font-family: 'Segoe UI', sans-serif;
             text-align: center;
-            background-color: #f5f5f5;
+            background: linear-gradient(to right, #dfe9f3, #ffffff);
         }
 
         h1 {
-            color: green;
+            color: #2e7d32;
+            margin-bottom: 20px;
         }
 
         #dashboard {
             margin-top: 20px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        /* CARD STYLE */
+        .card {
+            background: white;
+            padding: 15px;
+            margin: 10px auto;
+            width: 300px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 6px 18px rgba(0,0,0,0.2);
         }
 
         canvas {
             background: white;
-            border: 1px solid #ccc;
+            border-radius: 10px;
             margin-top: 20px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
         }
 
         #loginBox {
             margin-top: 100px;
+            animation: fadeIn 1s ease-in;
         }
 
         input {
             padding: 10px;
-            width: 200px;
+            width: 220px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
 
         button {
             padding: 10px 20px;
-            background: green;
+            background: #2e7d32;
             color: white;
             border: none;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background 0.3s;
         }
 
         button:hover {
-            background: darkgreen;
+            background: #1b5e20;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN SECTION ================= -->
+<!-- ================= LOGIN ================= -->
 <div id="loginBox">
-
     <h2>Admin Login</h2>
 
     <input id="username" placeholder="Username"><br><br>
@@ -63,33 +92,22 @@
     <button onclick="login()">Login</button>
 
     <p id="loginMsg" style="color:red;"></p>
-
 </div>
-
 
 <!-- ================= DASHBOARD ================= -->
 <div id="dashboard" style="display:none;">
 
     <h1>Green Computing Dashboard</h1>
 
-    <!-- ✅ DEVICE NAME -->
-    <h3>Device: <span id="device">-</span></h3>
-
-    <!-- CPU DATA -->
-    <h3>CPU Usage: <span id="cpu">0</span> %</h3>
-
-    <!-- POWER -->
-    <h3>Power Consumption: <span id="power">0</span> Watts</h3>
-
-    <!-- ENERGY -->
-    <h3>Energy Consumption: <span id="energy">0</span> kWh</h3>
-
-    <!-- CO2 -->
-    <h3>CO₂ Emission: <span id="co2">0</span> kg</h3>
+    <!-- CARDS -->
+    <div class="card">Device: <span id="device">-</span></div>
+    <div class="card">CPU Usage: <span id="cpu">0</span> %</div>
+    <div class="card">Power: <span id="power">0</span> W</div>
+    <div class="card">Energy: <span id="energy">0</span> kWh</div>
+    <div class="card">CO₂: <span id="co2">0</span> kg</div>
 
     <br>
 
-    <!-- LOGOUT BUTTON -->
     <button onclick="logout()">Logout</button>
 
     <br><br>
@@ -99,16 +117,13 @@
 
 </div>
 
-
 <!-- ================= JAVASCRIPT ================= -->
 <script>
 
 let chart;
 
-
-// ---------------- LOGIN FUNCTION ----------------
+// ---------------- LOGIN ----------------
 async function login() {
-
     const res = await fetch("/login", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -124,23 +139,21 @@ async function login() {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
 
+        fetchData();
         loadGraph();
     } else {
         document.getElementById("loginMsg").innerText = "Invalid credentials";
     }
 }
 
-
-// ---------------- LOGOUT FUNCTION ----------------
+// ---------------- LOGOUT ----------------
 async function logout() {
     await fetch("/logout");
     location.reload();
 }
 
-
 // ---------------- AUTO LOGIN CHECK ----------------
 window.onload = async function () {
-
     const res = await fetch("/check_login");
     const data = await res.json();
 
@@ -148,37 +161,47 @@ window.onload = async function () {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
 
+        fetchData();
         loadGraph();
     }
 };
 
+// ---------------- ANIMATION FUNCTION ----------------
+function animateValue(id, start, end, duration) {
+    let range = end - start;
+    let current = start;
+    let increment = range / (duration / 50);
 
-// ---------------- FETCH LIVE DATA ----------------
+    let timer = setInterval(() => {
+        current += increment;
+        document.getElementById(id).innerText = current.toFixed(2);
+
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            document.getElementById(id).innerText = end;
+            clearInterval(timer);
+        }
+    }, 50);
+}
+
+// ---------------- FETCH DATA ----------------
 async function fetchData() {
-
     const response = await fetch("/live");
     const data = await response.json();
 
-    // ✅ DEVICE
     document.getElementById("device").innerText = data.device;
 
-    document.getElementById("cpu").innerText = data.cpu_usage;
-    document.getElementById("power").innerText = data.power_watts;
-    document.getElementById("energy").innerText = data.energy_kwh;
-    document.getElementById("co2").innerText = data.co2_kg;
+    animateValue("cpu", 0, data.cpu_usage, 300);
+    animateValue("power", 0, data.power_watts, 300);
+    animateValue("energy", 0, data.energy_kwh, 300);
+    animateValue("co2", 0, data.co2_kg, 300);
 }
 
-
-// Refresh every 2 seconds
+// refresh every 2 seconds
 setInterval(fetchData, 2000);
 
-// Initial load
-fetchData();
 
-
-// ---------------- LOAD GRAPH ----------------
+// ---------------- GRAPH ----------------
 async function loadGraph() {
-
     const res = await fetch("/graph");
     const data = await res.json();
 
