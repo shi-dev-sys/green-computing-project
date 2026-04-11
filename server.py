@@ -16,24 +16,32 @@ def home():
 # ---------------- ENERGY API ----------------
 @app.route("/energy", methods=["POST"])
 def energy_route():
-    data = request.json
+    try:
+        data = request.json
 
-    cpu = data.get("cpu_usage", 0)
-    hours = data.get("hours", 1)
-    active = data.get("active_time", 0)
-    idle = data.get("idle_time", 0)
-    device = data.get("device", "unknown")  # ✅ NEW
+        cpu = data.get("cpu_usage", 0)
+        hours = data.get("hours", 1)
+        active = data.get("active_time", 0)
+        idle = data.get("idle_time", 0)
+        device = data.get("device", "unknown")
 
-    # Process energy
-    result = process_data(cpu, hours, active, idle)
+        result = process_data(cpu, hours, active, idle)
 
-    # Add device to result
-    result["device"] = device  # ✅ NEW
+        # Ensure all keys exist
+        result["device"] = device
+        result.setdefault("power_watts", 0)
+        result.setdefault("energy_kwh", 0)
+        result.setdefault("co2_kg", 0)
+        result.setdefault("active_time", active)
+        result.setdefault("idle_time", idle)
 
-    # Save to database
-    save_to_db(result)
+        save_to_db(result)
 
-    return jsonify(result)
+        return jsonify(result)
+
+    except Exception as e:
+        print("ERROR:", e)
+        return jsonify({"error": str(e)})
 
 
 # ---------------- LIVE DATA ----------------
