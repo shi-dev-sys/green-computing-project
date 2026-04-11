@@ -3,14 +3,58 @@
 <head>
     <title>Green Computing Dashboard</title>
 
-    <!-- Chart.js -->
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: green;
+        }
+
+        #dashboard {
+            margin-top: 20px;
+        }
+
+        canvas {
+            background: white;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        #loginBox {
+            margin-top: 100px;
+        }
+
+        input {
+            padding: 10px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: darkgreen;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- ================= LOGIN SECTION ================= -->
 <div id="loginBox">
+
     <h2>Admin Login</h2>
 
     <input id="username" placeholder="Username"><br><br>
@@ -18,36 +62,53 @@
 
     <button onclick="login()">Login</button>
 
-    <p id="loginMsg"></p>
+    <p id="loginMsg" style="color:red;"></p>
+
 </div>
+
 
 <!-- ================= DASHBOARD ================= -->
 <div id="dashboard" style="display:none;">
 
     <h1>Green Computing Dashboard</h1>
 
-    <!-- ✅ DEVICE -->
-    <h3>Device: <span id="device"></span></h3>
+    <!-- ✅ DEVICE NAME -->
+    <h3>Device: <span id="device">-</span></h3>
 
-    <h3>CPU Usage: <span id="cpu"></span>%</h3>
-    <h3>Power: <span id="power"></span> W</h3>
-    <h3>Energy: <span id="energy"></span> kWh</h3>
-    <h3>CO2: <span id="co2"></span> kg</h3>
+    <!-- CPU DATA -->
+    <h3>CPU Usage: <span id="cpu">0</span> %</h3>
 
+    <!-- POWER -->
+    <h3>Power Consumption: <span id="power">0</span> Watts</h3>
+
+    <!-- ENERGY -->
+    <h3>Energy Consumption: <span id="energy">0</span> kWh</h3>
+
+    <!-- CO2 -->
+    <h3>CO₂ Emission: <span id="co2">0</span> kg</h3>
+
+    <br>
+
+    <!-- LOGOUT BUTTON -->
     <button onclick="logout()">Logout</button>
 
+    <br><br>
+
     <!-- GRAPH -->
-    <canvas id="energyChart" width="400" height="200"></canvas>
+    <canvas id="energyChart" width="600" height="300"></canvas>
 
 </div>
+
 
 <!-- ================= JAVASCRIPT ================= -->
 <script>
 
 let chart;
 
-// ---------------- LOGIN ----------------
+
+// ---------------- LOGIN FUNCTION ----------------
 async function login() {
+
     const res = await fetch("/login", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -62,51 +123,62 @@ async function login() {
     if (data.status === "success") {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
+
         loadGraph();
     } else {
         document.getElementById("loginMsg").innerText = "Invalid credentials";
     }
 }
 
-// ---------------- LOGOUT ----------------
+
+// ---------------- LOGOUT FUNCTION ----------------
 async function logout() {
     await fetch("/logout");
     location.reload();
 }
 
+
 // ---------------- AUTO LOGIN CHECK ----------------
 window.onload = async function () {
+
     const res = await fetch("/check_login");
     const data = await res.json();
 
     if (data.logged_in) {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
+
         loadGraph();
     }
 };
 
-// ---------------- LIVE DATA ----------------
+
+// ---------------- FETCH LIVE DATA ----------------
 async function fetchData() {
+
     const response = await fetch("/live");
     const data = await response.json();
 
+    // ✅ DEVICE
     document.getElementById("device").innerText = data.device;
+
     document.getElementById("cpu").innerText = data.cpu_usage;
     document.getElementById("power").innerText = data.power_watts;
     document.getElementById("energy").innerText = data.energy_kwh;
     document.getElementById("co2").innerText = data.co2_kg;
 }
 
-// refresh every 2 seconds
+
+// Refresh every 2 seconds
 setInterval(fetchData, 2000);
 
-// initial load
+// Initial load
 fetchData();
 
 
-// ---------------- GRAPH ----------------
+// ---------------- LOAD GRAPH ----------------
 async function loadGraph() {
+
     const res = await fetch("/graph");
     const data = await res.json();
 
