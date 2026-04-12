@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify, render_template, session
 import sqlite3
+
 from energy import process_data
-from energy_db import init_db, save_to_db, get_latest
+from energy_db import init_db, save_to_db
 
 app = Flask(__name__)
 app.secret_key = "greencomputing123"
+
+# 🧱 Initialize DB
+init_db()
 
 
 # ---------------- HOME ----------------
@@ -27,15 +31,15 @@ def energy_route():
 
         result = process_data(cpu, hours, active, idle)
 
-        # Ensure all keys exist
+        # add missing fields safely
         result["device"] = device
-        result.setdefault("power_watts", 0)
-        result.setdefault("energy_kwh", 0)
-        result.setdefault("co2_kg", 0)
-        result.setdefault("active_time", active)
-        result.setdefault("idle_time", idle)
 
-        save_to_db(result)
+        power = result.get("power_watts", 0)
+        energy = result.get("energy_kwh", 0)
+        co2 = result.get("co2_kg", 0)
+
+        # 💾 FIXED: correct DB insert (NOT dictionary)
+        save_to_db(device, cpu, hours, active, idle)
 
         return jsonify(result)
 
@@ -47,49 +51,46 @@ def energy_route():
 # ---------------- LIVE DATA ----------------
 @app.route("/live")
 def live_data():
-    conn = sqlite3.connect("data.db")
+    conn = sqlite3.connect("energy.db")
     c = conn.cursor()
 
     c.execute("""
-        SELECT device, cpu, power, energy, co2, active_time, idle_time
+        SELECT device, cpu_usage, hours, active_time, idle_time
         FROM energy_data
-        ORDER BY rowid DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
     """)
+
     row = c.fetchone()
     conn.close()
 
     if row:
-        return {
+        return jsonify({
             "device": row[0],
             "cpu_usage": row[1],
-            "power_watts": row[2],
-            "energy_kwh": row[3],
-            "co2_kg": row[4],
-            "active_time": row[5],
-            "idle_time": row[6]
-        }
+            "hours": row[2],
+            "active_time": row[3],
+            "idle_time": row[4]
+        })
 
-    return {
+    return jsonify({
         "device": "No Data",
         "cpu_usage": 0,
-        "power_watts": 0,
-        "energy_kwh": 0,
-        "co2_kg": 0,
+        "hours": 0,
         "active_time": 0,
         "idle_time": 0
-    }
+    })
 
 
 # ---------------- GRAPH DATA ----------------
 @app.route("/graph")
 def graph():
-    conn = sqlite3.connect("data.db")
+    conn = sqlite3.connect("energy.db")
     c = conn.cursor()
 
     c.execute("""
-        SELECT time, energy
+        SELECT id, cpu_usage
         FROM energy_data
-        ORDER BY rowid DESC LIMIT 10
+        ORDER BY id DESC LIMIT 10
     """)
 
     rows = c.fetchall()
@@ -98,7 +99,7 @@ def graph():
     rows.reverse()
 
     return jsonify({
-        "labels": [r[0] for r in rows],
+        "labels": [str(r[0]) for r in rows],
         "values": [r[1] for r in rows]
     })
 

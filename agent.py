@@ -1,15 +1,12 @@
 import requests
 import time
 import psutil
-import socket  # ✅ added for device name
+import socket
 
-# Flask server URL
 URL = "https://green-computing-project.onrender.com/energy"
 
-# Get device name
 device_name = socket.gethostname()
 
-# ⏱️ Start time for calculating runtime hours
 start_time = time.time()
 
 while True:
@@ -17,31 +14,26 @@ while True:
         # CPU usage (%)
         cpu_usage = psutil.cpu_percent(interval=1)
 
-        # CPU time breakdown (%)
-        cpu_times = psutil.cpu_times_percent()
-
-        # ⏱️ REAL RUNNING HOURS
+        # Runtime in hours
         hours = (time.time() - start_time) / 3600
 
-        # ⏱️ IDLE TIME IN HOURS
-        idle_hours = hours * (cpu_times.idle / 100)
+        # Better interpretation
+        active_time = cpu_usage / 100 * hours
+        idle_time = hours - active_time
 
-        # Data packet sent to Flask
         data = {
-            "device": device_name,  # ✅ added
+            "device": device_name,
             "cpu_usage": cpu_usage,
             "hours": hours,
-            "active_time": cpu_times.user + cpu_times.system,
-            "idle_time": idle_hours
+            "active_time": active_time,
+            "idle_time": idle_time
         }
 
-        # Send request to server
         response = requests.post(URL, json=data, timeout=5)
 
         print("Device:", device_name)
         print("Sent:", data)
 
-        # Safe response handling
         try:
             print("Received:", response.json())
         except:
