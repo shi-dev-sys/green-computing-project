@@ -53,13 +53,14 @@ def energy_route():
     return jsonify(result)
 
 # ---------------- LIVE DATA ----------------
+
 @app.route("/live")
 def live_data():
     conn = sqlite3.connect("energy.db")
     c = conn.cursor()
 
     c.execute("""
-        SELECT device, cpu_usage, hours, active_time, idle_time
+        SELECT device, cpu_usage, power_watts, energy_kwh, co2_kg, active_time, idle_time
         FROM energy_data
         ORDER BY id DESC LIMIT 1
     """)
@@ -68,21 +69,25 @@ def live_data():
     conn.close()
 
     if row:
-        return jsonify({
+        return {
             "device": row[0],
             "cpu_usage": row[1],
-            "hours": row[2],
-            "active_time": row[3],
-            "idle_time": row[4]
-        })
+            "power_watts": row[2],
+            "energy_kwh": row[3],
+            "co2_kg": row[4],
+            "active_time": row[5],
+            "idle_time": row[6]
+        }
 
-    return jsonify({
+    return {
         "device": "No Data",
         "cpu_usage": 0,
-        "hours": 0,
+        "power_watts": 0,
+        "energy_kwh": 0,
+        "co2_kg": 0,
         "active_time": 0,
         "idle_time": 0
-    })
+    }
 
 
 # ---------------- GRAPH DATA ----------------
