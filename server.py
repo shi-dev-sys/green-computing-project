@@ -20,33 +20,36 @@ def home():
 # ---------------- ENERGY API ----------------
 @app.route("/energy", methods=["POST"])
 def energy_route():
-    try:
-        data = request.json
+    data = request.json
 
-        cpu = data.get("cpu_usage", 0)
-        hours = data.get("hours", 1)
-        active = data.get("active_time", 0)
-        idle = data.get("idle_time", 0)
-        device = data.get("device", "unknown")
+    cpu = data.get("cpu_usage", 0)
+    hours = data.get("hours", 1)
+    active = data.get("active_time", 0)
+    idle = data.get("idle_time", 0)
+    device = data.get("device", "unknown")
 
-        result = process_data(cpu, hours, active, idle)
+    # 🔥 PUT THIS HERE (IMPORTANT PART)
+    result = process_data(cpu, hours, active, idle)
 
-        # add missing fields safely
-        result["device"] = device
+    result["device"] = device
 
-        power = result.get("power_watts", 0)
-        energy = result.get("energy_kwh", 0)
-        co2 = result.get("co2_kg", 0)
+    power = result.get("power_watts", 0)
+    energy = result.get("energy_kwh", 0)
+    co2 = result.get("co2_kg", 0)
 
-        # 💾 FIXED: correct DB insert (NOT dictionary)
-        save_to_db(device, cpu, hours, active, idle)
+    # 💾 NOW SAVE TO DATABASE (after this)
+    save_to_db(
+        device,
+        cpu,
+        hours,
+        active,
+        idle,
+        power,
+        energy,
+        co2
+    )
 
-        return jsonify(result)
-
-    except Exception as e:
-        print("ERROR:", e)
-        return jsonify({"error": str(e)})
-
+    return jsonify(result)
 
 # ---------------- LIVE DATA ----------------
 @app.route("/live")
