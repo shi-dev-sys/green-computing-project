@@ -8,13 +8,17 @@ def get_connection():
     return sqlite3.connect(DB_NAME, check_same_thread=False)
 
 
-# 🧱 Create table (FULL STRUCTURE)
+# 🧱 Create table (FULL STRUCTURE - FORCE RESET)
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # 🔥 VERY IMPORTANT: delete old table
+    cursor.execute("DROP TABLE IF EXISTS energy_data")
+
+    # 🔥 create new table with correct columns
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS energy_data (
+    CREATE TABLE energy_data (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         device TEXT,
         cpu_usage REAL,
