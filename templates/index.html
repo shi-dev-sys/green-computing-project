@@ -2,32 +2,83 @@
 <html>
 <head>
     <title>Green Computing Dashboard</title>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
             margin: 0;
             font-family: "Inter", sans-serif;
-            background: linear-gradient(-45deg, #0b1220, #0f172a, #020617);
-            background-size: 400% 400%;
-            animation: gradientMove 12s ease infinite;
+            background: radial-gradient(circle at top, #0b1220, #020617);
             color: #e5e7eb;
+            overflow-x: hidden;
         }
 
-        @keyframes gradientMove {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
+        /* ===== LOGIN (PREMIUM GLASS CARD) ===== */
+        #loginBox {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* SIDEBAR */
+        .login-card {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 30px rgba(34,197,94,0.15);
+            text-align: center;
+            width: 320px;
+            animation: floatIn 0.8s ease;
+        }
+
+        .login-card h2 {
+            color: #22c55e;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 15px rgba(34,197,94,0.6);
+            transform: scale(1.02);
+        }
+
+        /* ===== BUTTON ===== */
+        button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            box-shadow: 0 0 25px rgba(34,197,94,0.6);
+            transform: scale(1.05);
+        }
+
+        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 240px;
             height: 100vh;
             position: fixed;
             background: rgba(15,23,42,0.8);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
             padding: 25px;
             border-right: 1px solid rgba(255,255,255,0.05);
         }
@@ -36,7 +87,7 @@
             color: #22c55e;
         }
 
-        /* MAIN */
+        /* ===== MAIN ===== */
         .main {
             margin-left: 260px;
             padding: 25px;
@@ -53,22 +104,7 @@
             font-weight: 600;
         }
 
-        button {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(34,197,94,0.4);
-        }
-
-        /* GRID */
+        /* ===== GRID ===== */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -76,19 +112,42 @@
             margin-top: 25px;
         }
 
-        /* GLASS CARD */
+        /* ===== CARD + NEON EFFECT ===== */
         .card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(12px);
             padding: 18px;
             border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.08);
-            transition: 0.4s;
+            transition: 0.35s;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* NEON HOVER EFFECT */
         .card:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 0 25px rgba(34,197,94,0.2);
+            transform: translateY(-8px) scale(1.03);
+            box-shadow:
+                0 0 10px #22c55e,
+                0 0 25px #22c55e,
+                0 0 40px rgba(34,197,94,0.6);
+            border-color: #22c55e;
+        }
+
+        /* LIGHT SWEEP EFFECT */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(34,197,94,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .card:hover::before {
+            left: 100%;
         }
 
         .label {
@@ -100,39 +159,12 @@
             font-size: 26px;
             font-weight: 600;
             margin-top: 8px;
-            transition: 0.3s;
         }
 
-        /* ALERT GLOW */
+        /* ALERT */
         .alert-high {
             border-left: 5px solid #ef4444;
-            box-shadow: 0 0 20px rgba(239,68,68,0.6);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {box-shadow: 0 0 5px rgba(239,68,68,0.3);}
-            50% {box-shadow: 0 0 25px rgba(239,68,68,0.8);}
-            100% {box-shadow: 0 0 5px rgba(239,68,68,0.3);}
-        }
-
-        /* LOGIN */
-        #loginBox {
-            text-align: center;
-            margin-top: 120px;
-        }
-
-        input {
-            padding: 12px;
-            width: 240px;
-            margin: 6px;
-            border-radius: 10px;
-            border: none;
-            outline: none;
-        }
-
-        input:focus {
-            box-shadow: 0 0 10px rgba(34,197,94,0.4);
+            box-shadow: 0 0 25px rgba(239,68,68,0.6);
         }
 
         canvas {
@@ -142,6 +174,12 @@
             padding: 10px;
         }
 
+        /* LOGIN ANIMATION */
+        @keyframes floatIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
     </style>
 </head>
 
@@ -149,17 +187,18 @@
 
 <!-- LOGIN -->
 <div id="loginBox">
-    <h2>🔐 Admin Login</h2>
-    <input id="username" placeholder="Username"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-    <p id="loginMsg" style="color:red;"></p>
+    <div class="login-card">
+        <h2>🔐 Admin Login</h2>
+        <input id="username" placeholder="Username"><br>
+        <input id="password" type="password" placeholder="Password"><br>
+        <button onclick="login()">Login</button>
+        <p id="loginMsg" style="color:red;"></p>
+    </div>
 </div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none;">
     <h2>⚡ Green Compute</h2>
-    <p>AI Energy Intelligence</p>
 </div>
 
 <!-- MAIN -->
@@ -176,17 +215,13 @@
         <div class="card"><div class="label">Power</div><div class="value" id="power">0 W</div></div>
         <div class="card"><div class="label">Energy</div><div class="value" id="energy">0</div></div>
         <div class="card"><div class="label">CO₂</div><div class="value" id="co2">0</div></div>
-        <div class="card"><div class="label">Sleep</div><div class="value" id="sleep">--</div></div>
         <div class="card" id="alertCard"><div class="label">Alert</div><div class="value" id="alert">--</div></div>
     </div>
 
     <canvas id="energyChart"></canvas>
-
 </div>
 
 <script>
-
-let interval = null;
 
 // LOGIN
 async function login() {
@@ -202,56 +237,20 @@ async function login() {
     const data = await res.json();
 
     if (data.status === "success") {
-        showDashboard();
-    } else {
-        document.getElementById("loginMsg").innerText = "Invalid login";
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        document.getElementById("sidebar").style.display = "block";
+
+        fetchData();
+        loadGraph();
+        setInterval(fetchData, 2500);
     }
-}
-
-// SHOW DASHBOARD
-function showDashboard() {
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    document.getElementById("sidebar").style.display = "block";
-
-    fetchData();
-    loadGraph();
-
-    if (interval) clearInterval(interval);
-    interval = setInterval(fetchData, 2500);
 }
 
 // LOGOUT
 async function logout() {
-    await fetch("/logout", { method: "GET", credentials: "include" });
-
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById("sidebar").style.display = "none";
-    document.getElementById("loginBox").style.display = "block";
-
-    if (interval) clearInterval(interval);
-
-    setTimeout(() => location.reload(), 300);
-}
-
-// AUTO LOGIN
-window.onload = async function () {
-    const res = await fetch("/check_login", { credentials: "include" });
-    const data = await res.json();
-
-    if (data.logged_in) {
-        showDashboard();
-    }
-};
-
-// SMOOTH VALUE UPDATE
-function smooth(id, value) {
-    const el = document.getElementById(id);
-    el.style.transform = "scale(1.1)";
-    setTimeout(() => {
-        el.innerText = value;
-        el.style.transform = "scale(1)";
-    }, 150);
+    await fetch("/logout");
+    location.reload();
 }
 
 // FETCH DATA
@@ -259,9 +258,9 @@ async function fetchData() {
     const res = await fetch("/live");
     const d = await res.json();
 
-    smooth("device", d.device);
-    smooth("cpu", d.cpu_usage.toFixed(2) + "%");
-    smooth("power", d.power_watts.toFixed(2) + " W");
+    document.getElementById("device").innerText = d.device;
+    document.getElementById("cpu").innerText = d.cpu_usage.toFixed(2) + "%";
+    document.getElementById("power").innerText = d.power_watts.toFixed(2) + " W";
 
     document.getElementById("energy").innerText =
         (d.energy_kwh * 1000).toFixed(3) + " mWh";
@@ -269,19 +268,12 @@ async function fetchData() {
     document.getElementById("co2").innerText =
         (d.co2_kg * 1000).toFixed(3) + " g";
 
-    document.getElementById("sleep").innerText =
-        d.sleep ? "🔴 Idle" : "🟢 Active";
-
     document.getElementById("alert").innerText =
         d.alert ? "⚠ High Usage" : "✅ Normal";
 
-    // ALERT GLOW
     const alertCard = document.getElementById("alertCard");
-    if (d.alert) {
-        alertCard.classList.add("alert-high");
-    } else {
-        alertCard.classList.remove("alert-high");
-    }
+    if (d.alert) alertCard.classList.add("alert-high");
+    else alertCard.classList.remove("alert-high");
 }
 
 // GRAPH
