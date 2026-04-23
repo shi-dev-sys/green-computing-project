@@ -9,6 +9,11 @@ device_name = socket.gethostname()
 
 start_time = time.time()
 
+# 🔥 Sleep Trigger Settings
+IDLE_THRESHOLD = 10      # CPU % below this = idle
+IDLE_LIMIT = 2           # 🔥 Trigger faster (~1 min since loop is 30 sec)
+idle_count = 0
+
 while True:
     try:
         # CPU usage (%)
@@ -21,15 +26,31 @@ while True:
         active_time = cpu_usage / 100 * hours
         idle_time = hours - active_time
 
+        # 🔥 Idle detection logic
+        if cpu_usage < IDLE_THRESHOLD:
+            idle_count += 1
+        else:
+            idle_count = 0
+
+        # 🔥 Trigger condition
+        sleep_triggered = False
+
+        if idle_count >= IDLE_LIMIT:
+            print("💤 Auto Sleep Trigger Activated!")
+            sleep_triggered = True
+            idle_count = 0
+
+        # 📡 Send data to server
         data = {
             "device": device_name,
             "cpu_usage": cpu_usage,
             "hours": hours,
             "active_time": active_time,
-            "idle_time": idle_time
+            "idle_time": idle_time,
+            "sleep_trigger": sleep_triggered   # NEW FIELD
         }
 
-        response = requests.post(URL, json=data, timeout=5)
+        response = requests.post(URL, json=data, timeout=30)
 
         print("Device:", device_name)
         print("Sent:", data)
@@ -50,4 +71,4 @@ while True:
     except Exception as e:
         print("❌ Error:", e)
 
-    time.sleep(5)
+    time.sleep(30)

@@ -1,4 +1,3 @@
- #  final redeploy trigger
 from flask import Flask, request, jsonify, render_template, session
 import sqlite3
 
@@ -8,8 +7,35 @@ from energy_db import init_db, save_to_db
 app = Flask(__name__)
 app.secret_key = "greencomputing123"
 
-# 🧱 Initialize DB
+# Initialize DB
 init_db()
+
+# Global states
+latest_sleep = False
+latest_alert = False
+
+
+# ---------------- SET EMAIL (FROM UI) ----------------
+@app.route("/set_email", methods=["POST"])
+def set_email():
+    data = request.json
+    email = data.get("email")
+
+    session["alert_email"] = email
+    return jsonify({"status": "saved"})
+
+
+# ---------------- EMAIL SIMULATION FUNCTION ----------------
+def send_email_alert(power, energy, device):
+    receiver = session.get("alert_email", "no-email-set")
+
+    print("\n📧 ================= EMAIL ALERT =================")
+    print(f"To: {receiver}")
+    print(f"Device: {device}")
+    print(f"Power: {power} W")
+    print(f"Energy: {energy} kWh")
+    print("⚠️ High energy usage detected!")
+    print("================================================\n")
 
 
 # ---------------- HOME ----------------
@@ -21,6 +47,8 @@ def home():
 # ---------------- ENERGY API ----------------
 @app.route("/energy", methods=["POST"])
 def energy_route():
+    global latest_sleep, latest_alert
+
     data = request.json
 
     cpu = data.get("cpu_usage", 0)
@@ -29,16 +57,37 @@ def energy_route():
     idle = data.get("idle_time", 0)
     device = data.get("device", "unknown")
 
-    # 🔥 PUT THIS HERE (IMPORTANT PART)
-    result = process_data(cpu, hours, active, idle)
+    # 💤 Sleep trigger
+    latest_sleep = data.get("sleep_trigger", False)
 
+    # ⚡ Process energy
+    result = process_data(cpu, hours, active, idle)
     result["device"] = device
 
     power = result.get("power_watts", 0)
     energy = result.get("energy_kwh", 0)
     co2 = result.get("co2_kg", 0)
 
-    # 💾 NOW SAVE TO DATABASE (after this)
+    # 🔥 ALERT LOGIC
+    HIGH_POWER_THRESHOLD = 70
+    HIGH_ENERGY_THRESHOLD = 0.1
+
+    previous_alert = latest_alert
+
+    high_usage = False
+    if power > HIGH_POWER_THRESHOLD or energy > HIGH_ENERGY_THRESHOLD:
+        high_usage = True
+
+    latest_alert = high_usage
+
+    # 📧 SIMULATED EMAIL (ONLY ON STATE CHANGE)
+    if high_usage and not previous_alert:
+        send_email_alert(power, energy, device)
+
+    # send to frontend
+    result["high_usage"] = high_usage
+
+    # 💾 SAVE TO DATABASE
     save_to_db(
         device,
         cpu,
@@ -52,8 +101,8 @@ def energy_route():
 
     return jsonify(result)
 
-# ---------------- LIVE DATA ----------------
 
+# ---------------- LIVE DATA ----------------
 @app.route("/live")
 def live_data():
     conn = sqlite3.connect("energy.db")
@@ -76,7 +125,9 @@ def live_data():
             "energy_kwh": row[3],
             "co2_kg": row[4],
             "active_time": row[5],
-            "idle_time": row[6]
+            "idle_time": row[6],
+            "sleep": latest_sleep,
+            "alert": latest_alert
         }
 
     return {
@@ -86,7 +137,9 @@ def live_data():
         "energy_kwh": 0,
         "co2_kg": 0,
         "active_time": 0,
-        "idle_time": 0
+        "idle_time": 0,
+        "sleep": False,
+        "alert": False
     }
 
 
@@ -132,6 +185,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.pop("user", None)
+    session.pop("alert_email", None)
     return jsonify({"status": "logged out"})
 
 
