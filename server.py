@@ -145,16 +145,17 @@ def live_data():
     })
 
 
-# ---------------- GRAPH DATA ----------------
+# ---------------- MULTI DEVICE GRAPH DATA ----------------
 @app.route("/graph")
 def graph():
     conn = sqlite3.connect("energy.db")
     c = conn.cursor()
 
     c.execute("""
-        SELECT id, cpu_usage
+        SELECT device, id, cpu_usage
         FROM energy_data
-        ORDER BY id DESC LIMIT 10
+        ORDER BY id DESC
+        LIMIT 30
     """)
 
     rows = c.fetchall()
@@ -162,9 +163,25 @@ def graph():
 
     rows.reverse()
 
+    labels = []
+    devices_data = {}
+
+    for row in rows:
+        device = row[0]
+        record_id = str(row[1])
+        cpu = row[2]
+
+        if record_id not in labels:
+            labels.append(record_id)
+
+        if device not in devices_data:
+            devices_data[device] = []
+
+        devices_data[device].append(cpu)
+
     return jsonify({
-        "labels": [str(r[0]) for r in rows],
-        "values": [r[1] for r in rows]
+        "labels": labels,
+        "devices": devices_data
     })
 
 
