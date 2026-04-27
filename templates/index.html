@@ -141,7 +141,6 @@
         }
 
         canvas {
-            margin-top: 30px;
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
             padding: 10px;
@@ -184,8 +183,11 @@
     <!-- MULTI DEVICE CARDS -->
     <div class="grid" id="deviceGrid"></div>
 
-    <!-- GRAPH -->
-    <canvas id="energyChart"></canvas>
+    <!-- GRAPH FIXED -->
+    <div style="height:400px; margin-top:30px;">
+        <canvas id="energyChart"></canvas>
+    </div>
+
 </div>
 
 <script>
@@ -279,21 +281,33 @@ async function fetchData() {
     });
 }
 
-// GRAPH
+// GRAPH FIXED
 async function loadGraph() {
     const res = await fetch("/graph");
     const data = await res.json();
 
-    new Chart(document.getElementById("energyChart"), {
+    const ctx = document.getElementById("energyChart").getContext("2d");
+
+    new Chart(ctx, {
         type: "line",
         data: {
             labels: data.labels,
             datasets: [{
                 label: "CPU Usage Trend",
                 data: data.values,
-                borderColor: "#22c55e",
-                tension: 0.4
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 }
