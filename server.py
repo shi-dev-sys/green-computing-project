@@ -31,10 +31,12 @@ def send_email_alert(power, energy, device):
 
     print("\n📧 ================= EMAIL ALERT =================")
     print(f"To: {receiver}")
-    print(f"Device: {device}")
-    print(f"Power: {power} W")
-    print(f"Energy: {energy} kWh")
-    print("⚠️ High energy usage detected!")
+    print("Subject: High Energy Usage Alert")
+    print(f"\n⚠ Device: {device}")
+    print(f"Power Consumption: {power} W")
+    print(f"Energy Used: {energy} kWh")
+    print("\nSystem is consuming unusually high energy.")
+    print("Please check the machine immediately.")
     print("================================================\n")
 
 
@@ -102,23 +104,31 @@ def energy_route():
     return jsonify(result)
 
 
-# ---------------- LIVE DATA ----------------
+# ---------------- LIVE DATA (MULTI DEVICE) ----------------
 @app.route("/live")
 def live_data():
     conn = sqlite3.connect("energy.db")
     c = conn.cursor()
 
     c.execute("""
-        SELECT device, cpu_usage, power_watts, energy_kwh, co2_kg, active_time, idle_time
+        SELECT device, cpu_usage, power_watts, energy_kwh, co2_kg,
+               active_time, idle_time
         FROM energy_data
-        ORDER BY id DESC LIMIT 1
+        WHERE id IN (
+            SELECT MAX(id)
+            FROM energy_data
+            GROUP BY device
+        )
+        ORDER BY id DESC
     """)
 
-    row = c.fetchone()
+    rows = c.fetchall()
     conn.close()
 
-    if row:
-        return {
+    devices = []
+
+    for row in rows:
+        devices.append({
             "device": row[0],
             "cpu_usage": row[1],
             "power_watts": row[2],
@@ -126,21 +136,13 @@ def live_data():
             "co2_kg": row[4],
             "active_time": row[5],
             "idle_time": row[6],
-            "sleep": latest_sleep,
-            "alert": latest_alert
-        }
+        })
 
-    return {
-        "device": "No Data",
-        "cpu_usage": 0,
-        "power_watts": 0,
-        "energy_kwh": 0,
-        "co2_kg": 0,
-        "active_time": 0,
-        "idle_time": 0,
-        "sleep": False,
-        "alert": False
-    }
+    return jsonify({
+        "devices": devices,
+        "sleep": latest_sleep,
+        "alert": latest_alert
+    })
 
 
 # ---------------- GRAPH DATA ----------------

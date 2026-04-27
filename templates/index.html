@@ -13,7 +13,7 @@
             overflow-x: hidden;
         }
 
-        /* ===== LOGIN (PREMIUM GLASS CARD) ===== */
+        /* LOGIN */
         #loginBox {
             height: 100vh;
             display: flex;
@@ -30,12 +30,10 @@
             box-shadow: 0 0 30px rgba(34,197,94,0.15);
             text-align: center;
             width: 320px;
-            animation: floatIn 0.8s ease;
         }
 
         .login-card h2 {
             color: #22c55e;
-            margin-bottom: 20px;
         }
 
         input {
@@ -47,15 +45,8 @@
             outline: none;
             background: rgba(255,255,255,0.08);
             color: white;
-            transition: 0.3s;
         }
 
-        input:focus {
-            box-shadow: 0 0 15px rgba(34,197,94,0.6);
-            transform: scale(1.02);
-        }
-
-        /* ===== BUTTON ===== */
         button {
             background: linear-gradient(135deg, #22c55e, #16a34a);
             border: none;
@@ -63,22 +54,19 @@
             border-radius: 10px;
             color: white;
             cursor: pointer;
-            transition: 0.3s;
             margin-top: 10px;
         }
 
         button:hover {
-            box-shadow: 0 0 25px rgba(34,197,94,0.6);
             transform: scale(1.05);
         }
 
-        /* ===== SIDEBAR ===== */
+        /* SIDEBAR */
         .sidebar {
             width: 240px;
             height: 100vh;
             position: fixed;
             background: rgba(15,23,42,0.8);
-            backdrop-filter: blur(15px);
             padding: 25px;
             border-right: 1px solid rgba(255,255,255,0.05);
         }
@@ -87,7 +75,7 @@
             color: #22c55e;
         }
 
-        /* ===== MAIN ===== */
+        /* MAIN */
         .main {
             margin-left: 260px;
             padding: 25px;
@@ -104,50 +92,25 @@
             font-weight: 600;
         }
 
-        /* ===== GRID ===== */
+        /* GRID */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 18px;
             margin-top: 25px;
         }
 
-        /* ===== CARD + NEON EFFECT ===== */
         .card {
             background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(12px);
             padding: 18px;
             border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.08);
-            transition: 0.35s;
-            position: relative;
-            overflow: hidden;
+            transition: 0.3s;
         }
 
-        /* NEON HOVER EFFECT */
         .card:hover {
-            transform: translateY(-8px) scale(1.03);
-            box-shadow:
-                0 0 10px #22c55e,
-                0 0 25px #22c55e,
-                0 0 40px rgba(34,197,94,0.6);
-            border-color: #22c55e;
-        }
-
-        /* LIGHT SWEEP EFFECT */
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(34,197,94,0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .card:hover::before {
-            left: 100%;
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
         }
 
         .label {
@@ -156,15 +119,25 @@
         }
 
         .value {
-            font-size: 26px;
+            font-size: 20px;
             font-weight: 600;
             margin-top: 8px;
         }
 
-        /* ALERT */
+        .device-title {
+            font-size: 18px;
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+
         .alert-high {
             border-left: 5px solid #ef4444;
-            box-shadow: 0 0 25px rgba(239,68,68,0.6);
+            box-shadow: 0 0 20px rgba(239,68,68,0.4);
+        }
+
+        .email-box {
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         canvas {
@@ -173,13 +146,6 @@
             border-radius: 12px;
             padding: 10px;
         }
-
-        /* LOGIN ANIMATION */
-        @keyframes floatIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
     </style>
 </head>
 
@@ -205,19 +171,20 @@
 <div class="main" id="dashboard" style="display:none;">
 
     <div class="topbar">
-        <div class="title">🌱 Energy Intelligence</div>
+        <div class="title">🌱 Energy Intelligence Dashboard</div>
         <button onclick="logout()">Logout</button>
     </div>
 
-    <div class="grid">
-        <div class="card"><div class="label">Device</div><div class="value" id="device">--</div></div>
-        <div class="card"><div class="label">CPU</div><div class="value" id="cpu">0%</div></div>
-        <div class="card"><div class="label">Power</div><div class="value" id="power">0 W</div></div>
-        <div class="card"><div class="label">Energy</div><div class="value" id="energy">0</div></div>
-        <div class="card"><div class="label">CO₂</div><div class="value" id="co2">0</div></div>
-        <div class="card" id="alertCard"><div class="label">Alert</div><div class="value" id="alert">--</div></div>
+    <!-- EMAIL ALERT SETTING -->
+    <div class="email-box">
+        <input id="alertEmail" placeholder="Enter alert email">
+        <button onclick="saveEmail()">Save Alert Email</button>
     </div>
 
+    <!-- MULTI DEVICE CARDS -->
+    <div class="grid" id="deviceGrid"></div>
+
+    <!-- GRAPH -->
     <canvas id="energyChart"></canvas>
 </div>
 
@@ -243,7 +210,9 @@ async function login() {
 
         fetchData();
         loadGraph();
-        setInterval(fetchData, 2500);
+        setInterval(fetchData, 3000);
+    } else {
+        document.getElementById("loginMsg").innerText = "Invalid Login";
     }
 }
 
@@ -253,27 +222,61 @@ async function logout() {
     location.reload();
 }
 
-// FETCH DATA
+// SAVE EMAIL
+async function saveEmail() {
+    const email = document.getElementById("alertEmail").value;
+
+    await fetch("/set_email", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: email })
+    });
+
+    alert("Alert email saved successfully!");
+}
+
+// FETCH MULTI DEVICE DATA
 async function fetchData() {
     const res = await fetch("/live");
-    const d = await res.json();
+    const data = await res.json();
 
-    document.getElementById("device").innerText = d.device;
-    document.getElementById("cpu").innerText = d.cpu_usage.toFixed(2) + "%";
-    document.getElementById("power").innerText = d.power_watts.toFixed(2) + " W";
+    const grid = document.getElementById("deviceGrid");
+    grid.innerHTML = "";
 
-    document.getElementById("energy").innerText =
-        (d.energy_kwh * 1000).toFixed(3) + " mWh";
+    data.devices.forEach(device => {
+        const card = document.createElement("div");
 
-    document.getElementById("co2").innerText =
-        (d.co2_kg * 1000).toFixed(3) + " g";
+        card.className = "card";
 
-    document.getElementById("alert").innerText =
-        d.alert ? "⚠ High Usage" : "✅ Normal";
+        if (device.power_watts > 70 || device.energy_kwh > 0.1) {
+            card.classList.add("alert-high");
+        }
 
-    const alertCard = document.getElementById("alertCard");
-    if (d.alert) alertCard.classList.add("alert-high");
-    else alertCard.classList.remove("alert-high");
+        card.innerHTML = `
+            <div class="device-title">${device.device}</div>
+
+            <div class="label">CPU Usage</div>
+            <div class="value">${device.cpu_usage.toFixed(2)}%</div>
+
+            <div class="label">Power</div>
+            <div class="value">${device.power_watts.toFixed(2)} W</div>
+
+            <div class="label">Energy</div>
+            <div class="value">${(device.energy_kwh * 1000).toFixed(3)} mWh</div>
+
+            <div class="label">CO₂</div>
+            <div class="value">${(device.co2_kg * 1000).toFixed(3)} g</div>
+
+            <div class="label">Status</div>
+            <div class="value">
+                ${(device.power_watts > 70 || device.energy_kwh > 0.1)
+                    ? "⚠ High Usage"
+                    : "✅ Normal"}
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
 }
 
 // GRAPH
@@ -286,7 +289,7 @@ async function loadGraph() {
         data: {
             labels: data.labels,
             datasets: [{
-                label: "CPU Usage",
+                label: "CPU Usage Trend",
                 data: data.values,
                 borderColor: "#22c55e",
                 tension: 0.4
