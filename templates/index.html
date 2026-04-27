@@ -281,24 +281,36 @@ async function fetchData() {
     });
 }
 
-// GRAPH FIXED
+// FINAL UPGRADED MULTI-DEVICE GRAPH
 async function loadGraph() {
     const res = await fetch("/graph");
     const data = await res.json();
 
     const ctx = document.getElementById("energyChart").getContext("2d");
 
-    new Chart(ctx, {
+    // destroy old chart if already exists
+    if (window.energyChartInstance) {
+        window.energyChartInstance.destroy();
+    }
+
+    // create datasets for each device
+    const datasets = [];
+
+    for (const device in data.devices) {
+        datasets.push({
+            label: device,
+            data: data.devices[device],
+            borderWidth: 2,
+            tension: 0.4,
+            fill: false
+        });
+    }
+
+    window.energyChartInstance = new Chart(ctx, {
         type: "line",
         data: {
             labels: data.labels,
-            datasets: [{
-                label: "CPU Usage Trend",
-                data: data.values,
-                borderWidth: 2,
-                tension: 0.4,
-                fill: false
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,

@@ -71,4 +71,4 @@ while True:
     except Exception as e:
         print("❌ Error:", e)
 
-    time.sleep(30)
+    time.sleep(10)
