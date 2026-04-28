@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, render_template, session
 import sqlite3
+import smtplib
+from email.mime.text import MIMEText
 
 from energy import process_data
 from energy_db import init_db, save_to_db
@@ -15,6 +17,48 @@ latest_sleep = False
 latest_alert = False
 
 
+# ---------------- REAL EMAIL ALERT FUNCTION ----------------
+def send_email_alert(power, energy, device):
+    # Your Gmail
+    sender_email = "greencomputingalerts@gmail.com"
+
+    # Your 16-character Google App Password
+    sender_password = "hskt ejbe iumw ggcw"
+
+    # Receiver email (can be same as sender for testing)
+    receiver = session.get("alert_email", sender_email)
+
+    subject = "High Energy Usage Alert"
+
+    body = f"""
+⚠ High Energy Usage Alert
+
+Device: {device}
+Power Consumption: {power} W
+Energy Used: {energy} kWh
+
+System is consuming unusually high energy.
+Please check the machine immediately.
+"""
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = receiver
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver, msg.as_string())
+        server.quit()
+
+        print("✅ Email alert sent successfully")
+
+    except Exception as e:
+        print("❌ Email sending failed:", e)
+
+
 # ---------------- SET EMAIL (FROM UI) ----------------
 @app.route("/set_email", methods=["POST"])
 def set_email():
@@ -23,21 +67,6 @@ def set_email():
 
     session["alert_email"] = email
     return jsonify({"status": "saved"})
-
-
-# ---------------- EMAIL SIMULATION FUNCTION ----------------
-def send_email_alert(power, energy, device):
-    receiver = session.get("alert_email", "no-email-set")
-
-    print("\n📧 ================= EMAIL ALERT =================")
-    print(f"To: {receiver}")
-    print("Subject: High Energy Usage Alert")
-    print(f"\n⚠ Device: {device}")
-    print(f"Power Consumption: {power} W")
-    print(f"Energy Used: {energy} kWh")
-    print("\nSystem is consuming unusually high energy.")
-    print("Please check the machine immediately.")
-    print("================================================\n")
 
 
 # ---------------- HOME ----------------
@@ -82,7 +111,7 @@ def energy_route():
 
     latest_alert = high_usage
 
-    # 📧 SIMULATED EMAIL (ONLY ON STATE CHANGE)
+    # 📧 REAL EMAIL ALERT (ONLY ON STATE CHANGE)
     if high_usage and not previous_alert:
         send_email_alert(power, energy, device)
 
