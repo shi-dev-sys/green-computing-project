@@ -202,25 +202,66 @@ async function fetchData(){
 
         const card=document.createElement('div');
         card.className='card';
-        card.innerHTML=`
+
+        const cpuId='cpu_'+id;
+        const powerId='power_'+id;
+        const energyId='energy_'+id;
+        const co2Id='co2_'+id;
+
+        card.innerHTML = `
         <div class="device-title">${d.device}</div>
 
-        <div class="label">CPU Usage</div><div class="value">${d.cpu_usage.toFixed(2)}%</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <div>
+                <div class="label">⚡ CPU Usage</div>
+                <div class="value">${d.cpu_usage.toFixed(2)}%</div>
+            </div>
+            <canvas id="${cpuId}" style="width:90px; height:45px;"></canvas>
+        </div>
 
-        <div class="label">Power</div><div class="value">${d.power_watts.toFixed(2)} W</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <div>
+                <div class="label">🔌 Power</div>
+                <div class="value">${d.power_watts.toFixed(2)} W</div>
+            </div>
+            <canvas id="${powerId}" style="width:90px; height:45px;"></canvas>
+        </div>
 
-        <div class="label">Energy</div><div class="value">${(d.energy_kwh*1000).toFixed(2)} mWh</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <div>
+                <div class="label">🌱 Energy</div>
+                <div class="value">${(d.energy_kwh*1000).toFixed(2)} mWh</div>
+            </div>
+            <canvas id="${energyId}" style="width:90px; height:45px;"></canvas>
+        </div>
 
-        <div class="label">CO₂</div><div class="value">${(d.co2_kg*1000).toFixed(2)} g</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <div>
+                <div class="label">🌍 CO₂</div>
+                <div class="value">${(d.co2_kg*1000).toFixed(2)} g</div>
+            </div>
+            <canvas id="${co2Id}" style="width:90px; height:45px;"></canvas>
+        </div>
 
-        <div style="height:160px;"><canvas id="${id}"></canvas></div>
+        <div class="badge ${d.power_watts>70?'high':'normal'}">${d.power_watts>70?'🔴 High Usage':'🟢 Normal'}</div>
+        `;
 
-        <div class="badge ${d.power_watts>70?'high':'normal'}">${d.power_watts>70?'High':'Normal'}</div>`;
+        grid.appendChild(card);
+
+        function miniChart(id,val){
+            const ctx=document.getElementById(id).getContext('2d');
+            new Chart(ctx,{type:'bar',data:{labels:[''],datasets:[{data:[val],backgroundColor:'#22c55e',barThickness:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:true}},scales:{x:{display:false},y:{beginAtZero:true,display:false}}}});
+        }
+
+        miniChart(cpuId,d.cpu_usage);
+        miniChart(powerId,Math.min(d.power_watts,100));
+        miniChart(energyId,Math.min(d.energy_kwh*1000,100));
+        miniChart(co2Id,Math.min(d.co2_kg*1000,100));
 
         grid.appendChild(card);
 
         const ctx=document.getElementById(id).getContext('2d');
-        new Chart(ctx,{type:'bar',data:{labels:['CPU','Power','Energy','CO₂'],datasets:[{data:[d.cpu_usage,Math.min(d.power_watts,100),Math.min(d.energy_kwh*1000,100),Math.min(d.co2_kg*1000,100)]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+        new Chart(ctx,{type:'bar',data:{labels:['⚡ CPU','🔌 Power','🌱 Energy','🌍 CO₂'],datasets:[{data:[d.cpu_usage,Math.min(d.power_watts,100),Math.min(d.energy_kwh*1000,100),Math.min(d.co2_kg*1000,100)],backgroundColor:['#22c55e','#3b82f6','#f59e0b','#ef4444'],borderRadius:8,barThickness:12}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:true,backgroundColor:'#111827',titleColor:'#fff',bodyColor:'#fff',padding:10,displayColors:false}},animation:{duration:900,easing:'easeOutQuart'},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e5e7eb'}}}}});
     });
 
     totalSystems.innerText=data.devices.length;
