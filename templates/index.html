@@ -92,8 +92,11 @@
             padding: 18px;
         }
 
-        .card:hover {
-            transform: translateY(-4px);
+        .device-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #16a34a;
+            margin-bottom: 10px;
         }
 
         .label {
@@ -104,13 +107,6 @@
         .value {
             font-size: 18px;
             font-weight: 600;
-        }
-
-        .device-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #16a34a;
-            margin-bottom: 10px;
         }
 
         .badge {
@@ -188,6 +184,8 @@
 
 <script>
 
+window.pieCharts = {};
+
 async function login(){
     const res = await fetch('/login',{
         method:'POST',
@@ -203,7 +201,7 @@ async function login(){
         sidebar.style.display='block';
         fetchData();
         loadGraph();
-        setInterval(fetchData,3000);
+        setInterval(fetchData,8000); // reduced refresh flicker
     } else {
         loginMsg.innerText='Invalid Login';
     }
@@ -224,6 +222,7 @@ async function saveEmail(){
 }
 
 async function fetchData(){
+
     const res = await fetch('/live');
     const data = await res.json();
 
@@ -250,9 +249,9 @@ async function fetchData(){
         card.innerHTML = `
         <div class="device-title">${d.device}</div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
 
-            <!-- LEFT VALUES -->
+            <!-- VALUES -->
             <div>
                 <div class="label">⚡ CPU</div>
                 <div class="value">${d.cpu_usage.toFixed(1)}%</div>
@@ -267,8 +266,8 @@ async function fetchData(){
                 <div class="value">${(d.co2_kg*1000).toFixed(1)} g</div>
             </div>
 
-            <!-- RIGHT PIE -->
-            <div style="width:120px; height:120px;">
+            <!-- PIE CHART -->
+            <div style="width:110px; height:110px;">
                 <canvas id="pie_${id}"></canvas>
             </div>
 
@@ -283,7 +282,11 @@ async function fetchData(){
 
         const ctx = document.getElementById(`pie_${id}`).getContext('2d');
 
-        new Chart(ctx,{
+        if(window.pieCharts[id]){
+            window.pieCharts[id].destroy();
+        }
+
+        window.pieCharts[id] = new Chart(ctx,{
             type:'doughnut',
             data:{
                 labels:['CPU','Power','Energy','CO₂'],
@@ -300,8 +303,9 @@ async function fetchData(){
             options:{
                 responsive:true,
                 maintainAspectRatio:false,
-                cutout:'60%',
-                plugins:{legend:{display:false}}
+                cutout:'65%',
+                plugins:{legend:{display:false}},
+                animation:false
             }
         });
     });
