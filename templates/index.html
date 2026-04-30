@@ -222,48 +222,25 @@ async function fetchData() {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-            <div class="device-title">${device.device}</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <div style="flex:1;">
-                    <div class="label">CPU Usage</div>
-                    <div class="value">${device.cpu_usage.toFixed(2)}%</div>
-                </div>
-                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
-                    <div style="width:${Math.min(device.cpu_usage,100)}%; height:100%; background:#22c55e;"></div>
-                </div>
+            <div class="device-title">$${device.device}</div>
+
+            <div class="label">CPU Usage</div>
+            <div class="value">$${device.cpu_usage.toFixed(2)}%</div>
+
+            <div class="label">Power</div>
+            <div class="value">$${device.power_watts.toFixed(2)} W</div>
+
+            <div class="label">Energy</div>
+            <div class="value">$${(device.energy_kwh*1000).toFixed(2)} mWh</div>
+
+            <div class="label">CO₂</div>
+            <div class="value">$${(device.co2_kg*1000).toFixed(2)} g</div>
+
+            <div style="height:180px; margin-top:15px;">
+                <canvas id="miniChart_$${device.device.replace(/\s+/g,'_')}"></canvas>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <div style="flex:1;">
-                    <div class="label">Power</div>
-                    <div class="value">${device.power_watts.toFixed(2)} W</div>
-                </div>
-                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
-                    <div style="width:${Math.min(device.power_watts,100)}%; height:100%; background:#3b82f6;"></div>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <div style="flex:1;">
-                    <div class="label">Energy</div>
-                    <div class="value">${(device.energy_kwh*1000).toFixed(2)} mWh</div>
-                </div>
-                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
-                    <div style="width:${Math.min(device.energy_kwh*1000,100)}%; height:100%; background:#f59e0b;"></div>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <div style="flex:1;">
-                    <div class="label">CO₂</div>
-                    <div class="value">${(device.co2_kg*1000).toFixed(2)} g</div>
-                </div>
-                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
-                    <div style="width:${Math.min(device.co2_kg*1000,100)}%; height:100%; background:#ef4444;"></div>
-                </div>
-            </div>
-
-            <div class="badge ${high ? 'high' : 'normal'}">${high ? '🔴 High Usage' : '🟢 Normal'}</div>
+            <div class="badge $${high ? 'high' : 'normal'}">$${high ? '🔴 High Usage' : '🟢 Normal'}</div>
         `;
         grid.appendChild(card);
     });
