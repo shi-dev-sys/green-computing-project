@@ -5,6 +5,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* ===== THEME SYSTEM ===== */
         :root {
             --bg: linear-gradient(135deg, #f8fafc, #eef2ff, #f0fdf4);
             --card: #ffffff;
@@ -26,53 +27,28 @@
             font-family: Inter, sans-serif;
             background: var(--bg);
             color: var(--text);
-            transition: 0.3s;
-            overflow-x: hidden;
+            transition: all 0.3s ease;
         }
 
-        /* ================= PARTICLES ================= */
-        #particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-
-        /* ================= LOGIN ================= */
+        /* ===== LOGIN ===== */
         #loginBox {
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
-            overflow: hidden;
         }
 
-        .login-glow {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 20% 20%, #22c55e33, transparent 40%),
-                        radial-gradient(circle at 80% 80%, #3b82f633, transparent 40%);
-            animation: move 6s infinite alternate;
-        }
-
-        @keyframes move {
-            from { transform: scale(1); }
-            to { transform: scale(1.2); }
+        .login-card, .card {
+            background: var(--card);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
         }
 
         .login-card {
-            z-index: 2;
-            width: 340px;
             padding: 40px;
+            width: 340px;
             text-align: center;
-            background: var(--card);
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         input {
@@ -86,7 +62,7 @@
         }
 
         button {
-            background: linear-gradient(135deg,#22c55e,#16a34a);
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
             border: none;
             padding: 10px 18px;
@@ -94,7 +70,7 @@
             cursor: pointer;
         }
 
-        /* ================= LAYOUT ================= */
+        /* ===== LAYOUT ===== */
         .sidebar {
             width: 240px;
             height: 100vh;
@@ -102,48 +78,77 @@
             background: var(--card);
             padding: 25px;
             border-right: 1px solid var(--border);
-            z-index: 2;
         }
+
+        .sidebar h2 { color: #16a34a; }
 
         .main {
             margin-left: 270px;
             padding: 25px;
-            position: relative;
-            z-index: 2;
         }
 
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .subinfo {
+            font-size: 14px;
+            color: #16a34a;
+        }
+
+        /* ===== GRID ===== */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 18px;
+            margin-top: 20px;
         }
 
         .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
             padding: 18px;
         }
 
         .device-title {
+            font-size: 18px;
             font-weight: 700;
             color: #16a34a;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .value {
+            font-size: 18px;
+            font-weight: 600;
         }
 
         .badge {
+            display: inline-block;
             padding: 6px 12px;
             border-radius: 999px;
-            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
             margin-top: 8px;
         }
 
-        .normal { background:#e8f5e9;color:#166534; }
-        .high { background:#fdeaea;color:#991b1b; }
+        .normal { background: #e8f5e9; color: #166534; }
+        .high { background: #fdeaea; color: #991b1b; }
 
         canvas {
             background: var(--card);
-            border-radius: 12px;
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
 
     </style>
@@ -151,94 +156,93 @@
 
 <body>
 
-<canvas id="particles"></canvas>
-
 <!-- LOGIN -->
 <div id="loginBox">
-    <div class="login-glow"></div>
-
     <div class="login-card">
-        <h2>🔐 Admin Login</h2>
-        <input id="username" placeholder="Username">
-        <input id="password" type="password" placeholder="Password">
+        <h2 style="color:#16a34a;">🔐 Admin Login</h2>
+        <input id="username" placeholder="Username"><br>
+        <input id="password" type="password" placeholder="Password"><br>
         <button onclick="login()">Login</button>
-        <p id="loginMsg"></p>
+        <p id="loginMsg" style="color:red;"></p>
     </div>
 </div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none;">
-    <h2>Green Computing</h2>
+    <h2>Green Computing Lab Energy & Carbon Emission Analyser</h2>
 </div>
 
 <!-- MAIN -->
 <div class="main" id="dashboard" style="display:none;">
 
-    <button onclick="toggleTheme()">🌙 Toggle Theme</button>
+    <div class="topbar">
+        <div>
+            <div class="title">Green Computing Dashboard</div>
+            <div class="subinfo" id="lastUpdated">Last Updated: --</div>
+        </div>
 
-    <input id="searchBox" placeholder="Search Device">
-    <input id="alertEmail" placeholder="Alert Email">
-    <button onclick="saveEmail()">Save Email</button>
+        <div>
+            <button onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
 
+    <div style="margin-top:20px;">
+        <input id="alertEmail" placeholder="Enter alert email">
+        <button onclick="saveEmail()">Save Alert Email</button>
+
+        <input id="searchBox" placeholder="Search Device">
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="grid">
+        <div class="card"><div class="label">Total Systems</div><div class="value" id="totalSystems">0</div></div>
+        <div class="card"><div class="label">High Usage Systems</div><div class="value" id="highSystems">0</div></div>
+        <div class="card"><div class="label">Total Energy</div><div class="value" id="totalEnergy">0</div></div>
+        <div class="card"><div class="label">Total CO₂</div><div class="value" id="totalCarbon">0</div></div>
+    </div>
+
+    <!-- DEVICES -->
     <div class="grid" id="deviceGrid"></div>
 
-    <canvas id="energyChart" height="120"></canvas>
+    <!-- MAIN GRAPH -->
+    <div style="height:400px; margin-top:20px;">
+        <canvas id="energyChart"></canvas>
+    </div>
 </div>
 
 <script>
 
-/* ================= PARTICLES ================= */
-const pc = document.getElementById("particles");
-const ctxp = pc.getContext("2d");
+window.pieCharts = {};
 
-pc.width = window.innerWidth;
-pc.height = window.innerHeight;
+/* ===== THEME ===== */
+function toggleTheme(){
+    document.body.classList.toggle("dark");
 
-let particles = [];
+    const btn = document.getElementById("themeBtn");
 
-for(let i=0;i<80;i++){
-    particles.push({
-        x:Math.random()*pc.width,
-        y:Math.random()*pc.height,
-        r:Math.random()*2,
-        dx:(Math.random()-0.5)*1,
-        dy:(Math.random()-0.5)*1
-    });
+    if(document.body.classList.contains("dark")){
+        btn.innerText = "☀️ Light Mode";
+        localStorage.setItem("theme","dark");
+    } else {
+        btn.innerText = "🌙 Dark Mode";
+        localStorage.setItem("theme","light");
+    }
 }
 
-function animate(){
-    ctxp.clearRect(0,0,pc.width,pc.height);
+window.onload = () => {
+    if(localStorage.getItem("theme")==="dark"){
+        document.body.classList.add("dark");
+        document.getElementById("themeBtn").innerText = "☀️ Light Mode";
+    }
+};
 
-    particles.forEach(p=>{
-        p.x+=p.dx;
-        p.y+=p.dy;
-
-        if(p.x<0||p.x>pc.width)p.dx*=-1;
-        if(p.y<0||p.y>pc.height)p.dy*=-1;
-
-        ctxp.beginPath();
-        ctxp.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctxp.fillStyle="rgba(34,197,94,0.5)";
-        ctxp.fill();
-    });
-
-    requestAnimationFrame(animate);
-}
-animate();
-
-/* ================= STATE ================= */
-let pieCharts = {};
-let lineChart;
-
-/* ================= LOGIN ================= */
+/* ===== LOGIN ===== */
 async function login(){
     const res = await fetch('/login',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            username:username.value,
-            password:password.value
-        })
+        body:JSON.stringify({username:username.value,password:password.value})
     });
 
     const data = await res.json();
@@ -250,62 +254,104 @@ async function login(){
 
         fetchData();
         loadGraph();
-        setInterval(fetchData,5000);
+        setInterval(fetchData,8000);
     } else {
-        loginMsg.innerText="Invalid Login";
+        loginMsg.innerText='Invalid Login';
     }
 }
 
-/* ================= SEARCH ================= */
-searchBox.addEventListener("keyup",fetchData);
+async function logout(){
+    await fetch('/logout');
+    location.reload();
+}
 
-/* ================= FETCH ================= */
+/* ===== EMAIL ===== */
+async function saveEmail(){
+    const email = document.getElementById('alertEmail').value;
+
+    await fetch('/set_email',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email})
+    });
+
+    alert("Email saved ✔");
+}
+
+/* ===== SEARCH FIX ===== */
+let searchTimeout;
+document.getElementById("searchBox").addEventListener("keyup",()=>{
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(fetchData,300);
+});
+
+/* ===== FETCH DATA ===== */
 async function fetchData(){
+
     const res = await fetch('/live');
     const data = await res.json();
 
-    const grid = document.getElementById("deviceGrid");
-    grid.innerHTML="";
+    const grid = document.getElementById('deviceGrid');
+    const search = document.getElementById('searchBox').value.toLowerCase();
+
+    grid.innerHTML = '';
+
+    let high = 0, totalE = 0, totalC = 0;
 
     data.devices.forEach((d,i)=>{
 
-        const id="c"+i;
+        if(search && !d.device.toLowerCase().includes(search)) return;
 
-        const card=document.createElement("div");
-        card.className="card";
+        if(d.power_watts > 70 || d.energy_kwh > 0.1) high++;
 
-        card.innerHTML=`
+        totalE += d.energy_kwh * 1000;
+        totalC += d.co2_kg * 1000;
+
+        const id = 'c'+i;
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
         <div class="device-title">${d.device}</div>
 
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div style="display:flex; align-items:center; gap:12px;">
+
             <div>
-                CPU ${d.cpu_usage.toFixed(1)}%<br>
-                Power ${d.power_watts.toFixed(1)}W<br>
-                Energy ${(d.energy_kwh*1000).toFixed(1)}mWh<br>
-                CO₂ ${(d.co2_kg*1000).toFixed(1)}g
+                <div class="label">⚡ CPU</div>
+                <div class="value">${d.cpu_usage.toFixed(1)}%</div>
+
+                <div class="label">🔌 Power</div>
+                <div class="value">${d.power_watts.toFixed(1)} W</div>
+
+                <div class="label">🌱 Energy</div>
+                <div class="value">${(d.energy_kwh*1000).toFixed(1)} mWh</div>
+
+                <div class="label">🌍 CO₂</div>
+                <div class="value">${(d.co2_kg*1000).toFixed(1)} g</div>
             </div>
 
-            <!-- ✅ FIXED SMALL PIE -->
-            <div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;">
-                <canvas id="pie_${id}" style="width:90px!important;height:90px!important;"></canvas>
+            <div style="width:110px; height:110px;">
+                <canvas id="pie_${id}"></canvas>
             </div>
+
         </div>
 
         <div class="badge ${d.power_watts>70?'high':'normal'}">
-            ${d.power_watts>70?'HIGH':'NORMAL'}
+            ${d.power_watts>70?'🔴 High Usage':'🟢 Normal'}
         </div>
         `;
 
         grid.appendChild(card);
 
-        const ctx=document.getElementById("pie_"+id).getContext("2d");
+        const ctx = document.getElementById(`pie_${id}`).getContext('2d');
 
-        if(pieCharts[id]) pieCharts[id].destroy();
+        if(window.pieCharts[id]) window.pieCharts[id].destroy();
 
-        pieCharts[id]=new Chart(ctx,{
-            type:"doughnut",
+        window.pieCharts[id] = new Chart(ctx,{
+            type:'doughnut',
             data:{
-                labels:["CPU","Power","Energy","CO₂"],
+                labels:['CPU','Power','Energy','CO₂'],
                 datasets:[{
                     data:[
                         d.cpu_usage,
@@ -313,35 +359,45 @@ async function fetchData(){
                         Math.min(d.energy_kwh*1000,100),
                         Math.min(d.co2_kg*1000,100)
                     ],
-                    backgroundColor:["#22c55e","#3b82f6","#f59e0b","#ef4444"]
+                    backgroundColor:['#22c55e','#3b82f6','#f59e0b','#ef4444']
                 }]
             },
             options:{
                 responsive:true,
                 maintainAspectRatio:false,
-                cutout:"70%",
+                cutout:'65%',
                 plugins:{legend:{display:false}},
                 animation:false
             }
         });
     });
+
+    totalSystems.innerText = data.devices.length;
+    highSystems.innerText = high;
+    totalEnergy.innerText = totalE.toFixed(2)+' mWh';
+    totalCarbon.innerText = totalC.toFixed(2)+' g';
+
+    lastUpdated.innerText = 'Last Updated: '+new Date().toLocaleTimeString();
 }
 
-/* ================= GRAPH ================= */
+/* ===== MAIN GRAPH ===== */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
 
-    if(lineChart) lineChart.destroy();
+    const ctx = energyChart.getContext('2d');
 
-    let ds=[];
-    for(let d in data.devices){
+    if(window.g) window.g.destroy();
+
+    const ds = [];
+    for(const d in data.devices){
         ds.push({label:d,data:data.devices[d],borderWidth:2});
     }
 
-    lineChart=new Chart(energyChart,{
-        type:"line",
-        data:{labels:data.labels,datasets:ds}
+    window.g = new Chart(ctx,{
+        type:'line',
+        data:{labels:data.labels,datasets:ds},
+        options:{responsive:true}
     });
 }
 
