@@ -13,7 +13,6 @@
             overflow-x: hidden;
         }
 
-        /* LOGIN */
         #loginBox {
             height: 100vh;
             display: flex;
@@ -61,7 +60,6 @@
             transform: scale(1.05);
         }
 
-        /* SIDEBAR */
         .sidebar {
             width: 240px;
             height: 100vh;
@@ -73,9 +71,9 @@
 
         .sidebar h2 {
             color: #22c55e;
+            font-size: 20px;
         }
 
-        /* MAIN */
         .main {
             margin-left: 260px;
             padding: 25px;
@@ -92,10 +90,9 @@
             font-weight: 600;
         }
 
-        /* GRID */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 18px;
             margin-top: 25px;
         }
@@ -116,18 +113,20 @@
         .label {
             color: #9ca3af;
             font-size: 13px;
+            margin-top: 10px;
         }
 
         .value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .device-title {
             font-size: 18px;
             color: #22c55e;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
 
         .alert-high {
@@ -145,12 +144,18 @@
             border-radius: 12px;
             padding: 10px;
         }
+
+        progress {
+            width: 100%;
+            height: 10px;
+            margin-top: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
     </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
 <div id="loginBox">
     <div class="login-card">
         <h2>🔐 Admin Login</h2>
@@ -161,12 +166,10 @@
     </div>
 </div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none;">
     <h2>Green Computing Lab Energy & Carbon Emission Analyser</h2>
 </div>
 
-<!-- MAIN -->
 <div class="main" id="dashboard" style="display:none;">
 
     <div class="topbar">
@@ -174,96 +177,78 @@
         <button onclick="logout()">Logout</button>
     </div>
 
-    <!-- EMAIL ALERT SETTING -->
     <div class="email-box">
         <input id="alertEmail" placeholder="Enter alert email">
         <button onclick="saveEmail()">Save Alert Email</button>
     </div>
 
-    <!-- MULTI DEVICE CARDS -->
     <div class="grid" id="deviceGrid"></div>
 
-    <!-- EXISTING LINE GRAPH -->
     <div style="height:400px; margin-top:30px;">
         <canvas id="energyChart"></canvas>
-    </div>
-
-    <!-- NEW BAR GRAPH SECTION -->
-    <div style="height:450px; margin-top:40px;">
-        <h2 style="color:#22c55e; margin-bottom:15px;">
-            Green Computing Lab Energy & Carbon Emission Analyser
-        </h2>
-        <canvas id="systemBarChart"></canvas>
     </div>
 
 </div>
 
 <script>
-
-// LOGIN
 async function login() {
-    const res = await fetch("/login", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
+    const res = await fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
         })
     });
 
     const data = await res.json();
 
-    if (data.status === "success") {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("dashboard").style.display = "block";
-        document.getElementById("sidebar").style.display = "block";
+    if (data.status === 'success') {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('sidebar').style.display = 'block';
 
         fetchData();
         loadGraph();
-        loadBarGraph();
 
         setInterval(() => {
             fetchData();
-            loadBarGraph();
         }, 3000);
     } else {
-        document.getElementById("loginMsg").innerText = "Invalid Login";
+        document.getElementById('loginMsg').innerText = 'Invalid Login';
     }
 }
 
-// LOGOUT
 async function logout() {
-    await fetch("/logout");
+    await fetch('/logout');
     location.reload();
 }
 
-// SAVE EMAIL
 async function saveEmail() {
-    const email = document.getElementById("alertEmail").value;
+    const email = document.getElementById('alertEmail').value;
 
-    await fetch("/set_email", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
+    await fetch('/set_email', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ email: email })
     });
 
-    alert("Alert email saved successfully!");
+    alert('Alert email saved successfully!');
 }
 
-// FETCH MULTI DEVICE DATA
 async function fetchData() {
-    const res = await fetch("/live");
+    const res = await fetch('/live');
     const data = await res.json();
 
-    const grid = document.getElementById("deviceGrid");
-    grid.innerHTML = "";
+    const grid = document.getElementById('deviceGrid');
+    grid.innerHTML = '';
 
     data.devices.forEach(device => {
-        const card = document.createElement("div");
-        card.className = "card";
+        const card = document.createElement('div');
+        card.className = 'card';
 
         if (device.power_watts > 70 || device.energy_kwh > 0.1) {
-            card.classList.add("alert-high");
+            card.classList.add('alert-high');
         }
 
         card.innerHTML = `
@@ -271,21 +256,25 @@ async function fetchData() {
 
             <div class="label">CPU Usage</div>
             <div class="value">${device.cpu_usage.toFixed(2)}%</div>
+            <progress value="${device.cpu_usage.toFixed(2)}" max="100"></progress>
 
             <div class="label">Power</div>
             <div class="value">${device.power_watts.toFixed(2)} W</div>
+            <progress value="${Math.min(device.power_watts, 100)}" max="100"></progress>
 
             <div class="label">Energy</div>
             <div class="value">${(device.energy_kwh * 1000).toFixed(3)} mWh</div>
+            <progress value="${Math.min(device.energy_kwh * 1000, 100)}" max="100"></progress>
 
             <div class="label">CO₂</div>
             <div class="value">${(device.co2_kg * 1000).toFixed(3)} g</div>
+            <progress value="${Math.min(device.co2_kg * 1000, 100)}" max="100"></progress>
 
             <div class="label">Status</div>
             <div class="value">
                 ${(device.power_watts > 70 || device.energy_kwh > 0.1)
-                    ? "⚠ High Usage"
-                    : "✅ Normal"}
+                    ? '⚠ High Usage'
+                    : '✅ Normal'}
             </div>
         `;
 
@@ -293,12 +282,11 @@ async function fetchData() {
     });
 }
 
-// EXISTING MULTI-DEVICE LINE GRAPH
 async function loadGraph() {
-    const res = await fetch("/graph");
+    const res = await fetch('/graph');
     const data = await res.json();
 
-    const ctx = document.getElementById("energyChart").getContext("2d");
+    const ctx = document.getElementById('energyChart').getContext('2d');
 
     if (window.energyChartInstance) {
         window.energyChartInstance.destroy();
@@ -317,7 +305,7 @@ async function loadGraph() {
     }
 
     window.energyChartInstance = new Chart(ctx, {
-        type: "line",
+        type: 'line',
         data: {
             labels: data.labels,
             datasets: datasets
@@ -333,76 +321,6 @@ async function loadGraph() {
         }
     });
 }
-
-// NEW SYSTEM-WISE BAR GRAPH
-async function loadBarGraph() {
-    const res = await fetch("/live");
-    const data = await res.json();
-
-    const labels = [];
-    const cpuData = [];
-    const powerData = [];
-    const energyData = [];
-    const carbonData = [];
-
-    data.devices.forEach(device => {
-        labels.push(device.device);
-        cpuData.push(device.cpu_usage);
-        powerData.push(device.power_watts);
-        energyData.push(device.energy_kwh * 1000);
-        carbonData.push(device.co2_kg * 1000);
-    });
-
-    const ctx = document.getElementById("systemBarChart").getContext("2d");
-
-    if (window.barChartInstance) {
-        window.barChartInstance.destroy();
-    }
-
-    window.barChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: "CPU Usage (%)",
-                    data: cpuData,
-                    borderWidth: 1
-                },
-                {
-                    label: "Power (W)",
-                    data: powerData,
-                    borderWidth: 1
-                },
-                {
-                    label: "Energy (mWh)",
-                    data: energyData,
-                    borderWidth: 1
-                },
-                {
-                    label: "CO₂ (g)",
-                    data: carbonData,
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: "top"
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
 </script>
 
 </body>
