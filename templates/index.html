@@ -30,6 +30,16 @@
             overflow-x: hidden;
         }
 
+        /* ================= PARTICLES ================= */
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
         /* ================= LOGIN ================= */
         #loginBox {
             height: 100vh;
@@ -38,13 +48,6 @@
             align-items: center;
             position: relative;
             overflow: hidden;
-        }
-
-        #particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
         }
 
         .login-glow {
@@ -99,11 +102,14 @@
             background: var(--card);
             padding: 25px;
             border-right: 1px solid var(--border);
+            z-index: 2;
         }
 
         .main {
             margin-left: 270px;
             padding: 25px;
+            position: relative;
+            z-index: 2;
         }
 
         .grid {
@@ -122,6 +128,7 @@
         .device-title {
             font-weight: 700;
             color: #16a34a;
+            margin-bottom: 8px;
         }
 
         .badge {
@@ -138,6 +145,7 @@
             background: var(--card);
             border-radius: 12px;
         }
+
     </style>
 </head>
 
@@ -183,12 +191,12 @@
 const pc = document.getElementById("particles");
 const ctxp = pc.getContext("2d");
 
-pc.width = innerWidth;
-pc.height = innerHeight;
+pc.width = window.innerWidth;
+pc.height = window.innerHeight;
 
 let particles = [];
 
-for(let i=0;i<70;i++){
+for(let i=0;i<80;i++){
     particles.push({
         x:Math.random()*pc.width,
         y:Math.random()*pc.height,
@@ -269,7 +277,7 @@ async function fetchData(){
         card.innerHTML=`
         <div class="device-title">${d.device}</div>
 
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:center;">
             <div>
                 CPU ${d.cpu_usage.toFixed(1)}%<br>
                 Power ${d.power_watts.toFixed(1)}W<br>
@@ -277,7 +285,10 @@ async function fetchData(){
                 CO₂ ${(d.co2_kg*1000).toFixed(1)}g
             </div>
 
-            <canvas id="pie_${id}" width="100" height="100"></canvas>
+            <!-- ✅ FIXED SMALL PIE -->
+            <div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="pie_${id}" style="width:90px!important;height:90px!important;"></canvas>
+            </div>
         </div>
 
         <div class="badge ${d.power_watts>70?'high':'normal'}">
@@ -305,12 +316,18 @@ async function fetchData(){
                     backgroundColor:["#22c55e","#3b82f6","#f59e0b","#ef4444"]
                 }]
             },
-            options:{cutout:"65%",plugins:{legend:{display:false}}}
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                cutout:"70%",
+                plugins:{legend:{display:false}},
+                animation:false
+            }
         });
     });
 }
 
-/* ================= LINE GRAPH ================= */
+/* ================= GRAPH ================= */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
