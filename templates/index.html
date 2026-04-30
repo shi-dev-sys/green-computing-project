@@ -5,7 +5,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* ================= THEME ================= */
         :root {
             --bg: linear-gradient(135deg, #f8fafc, #eef2ff, #f0fdf4);
             --card: #ffffff;
@@ -27,10 +26,9 @@
             font-family: Inter, sans-serif;
             background: var(--bg);
             color: var(--text);
-            transition: all 0.3s ease;
         }
 
-        /* ================= LOGIN ================= */
+        /* ===== PARTICLES LOGIN ===== */
         #loginBox {
             height: 100vh;
             display: flex;
@@ -40,42 +38,23 @@
             overflow: hidden;
         }
 
-        .login-glow {
+        canvas#particles {
             position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 20% 20%, #22c55e33, transparent 40%),
-                        radial-gradient(circle at 80% 80%, #3b82f633, transparent 40%);
-            animation: floatBg 6s infinite alternate ease-in-out;
-        }
-
-        @keyframes floatBg {
-            from { transform: scale(1); }
-            to { transform: scale(1.2); }
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .login-card {
+            z-index: 2;
             padding: 40px;
             width: 340px;
             text-align: center;
             background: var(--card);
             border-radius: 18px;
             border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            position: relative;
-            z-index: 2;
-        }
-
-        .boot-text {
-            font-size: 11px;
-            color: #22c55e;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            50% { opacity: 0.4; }
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
 
         input {
@@ -84,12 +63,10 @@
             margin: 8px 0;
             border-radius: 10px;
             border: 1px solid var(--border);
-            background: var(--card);
-            color: var(--text);
         }
 
         button {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
+            background: linear-gradient(135deg,#22c55e,#16a34a);
             color: white;
             border: none;
             padding: 10px 18px;
@@ -97,28 +74,7 @@
             cursor: pointer;
         }
 
-        .loader {
-            display: none;
-            margin: 10px auto;
-            width: 22px;
-            height: 22px;
-            border: 3px solid #334155;
-            border-top: 3px solid #22c55e;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        .fade-out {
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: 0.5s;
-        }
-
-        /* ================= LAYOUT ================= */
+        /* ===== LAYOUT ===== */
         .sidebar {
             width: 240px;
             height: 100vh;
@@ -128,335 +84,230 @@
             border-right: 1px solid var(--border);
         }
 
-        .sidebar h2 { color: #16a34a; }
-
         .main {
             margin-left: 270px;
             padding: 25px;
         }
 
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .title { font-size: 24px; font-weight: 700; }
-
-        .subinfo { font-size: 14px; color: #16a34a; }
-
-        /* ================= GRID ================= */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
             gap: 18px;
-            margin-top: 20px;
         }
 
         .card {
-            padding: 18px;
             background: var(--card);
-            border-radius: 16px;
             border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
         }
 
         .device-title {
-            font-size: 18px;
             font-weight: 700;
             color: #16a34a;
-            margin-bottom: 10px;
         }
-
-        .label { font-size: 13px; color: var(--muted); }
-
-        .value { font-size: 18px; font-weight: 600; }
 
         .badge {
-            display: inline-block;
             padding: 6px 12px;
             border-radius: 999px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 8px;
+            display: inline-block;
         }
 
-        .normal { background: #e8f5e9; color: #166534; }
-        .high { background: #fdeaea; color: #991b1b; }
+        .normal { background:#e8f5e9;color:#166534; }
+        .high { background:#fdeaea;color:#991b1b; }
 
         canvas {
             background: var(--card);
-            border-radius: 16px;
-            padding: 10px;
+            border-radius: 12px;
         }
-
-        .loader { display:none; }
     </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <div id="loginBox">
-    <div class="login-glow"></div>
+    <canvas id="particles"></canvas>
 
     <div class="login-card">
-
-        <div class="boot-text">SYSTEM BOOT SEQUENCE ACTIVE...</div>
-
-        <h2 style="color:#16a34a;">🔐 Admin Login</h2>
-
+        <h2>🔐 Admin Login</h2>
         <input id="username" placeholder="Username">
         <input id="password" type="password" placeholder="Password">
-
-        <button onclick="login()">ACCESS SYSTEM</button>
-
-        <div class="loader" id="loader"></div>
-
-        <p id="loginMsg" style="color:red;"></p>
+        <button onclick="login()">Login</button>
+        <p id="loginMsg"></p>
     </div>
 </div>
 
-<!-- ================= SIDEBAR ================= -->
+<!-- DASHBOARD -->
 <div class="sidebar" id="sidebar" style="display:none;">
-    <h2>Green Computing Lab Energy & Carbon Emission Analyser</h2>
+    <h2 style="color:#16a34a;">Green Computing</h2>
 </div>
 
-<!-- ================= MAIN ================= -->
 <div class="main" id="dashboard" style="display:none;">
 
-    <div class="topbar">
-        <div>
-            <div class="title">Green Computing Dashboard</div>
-            <div class="subinfo" id="lastUpdated">Last Updated: --</div>
-        </div>
-
-        <div>
-            <button onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
-            <button onclick="logout()">Logout</button>
-        </div>
+    <div style="display:flex;justify-content:space-between;">
+        <h2>Dashboard</h2>
+        <button onclick="toggleTheme()">🌙</button>
     </div>
 
-    <div style="margin-top:20px;">
-        <input id="alertEmail" placeholder="Enter alert email">
-        <button onclick="saveEmail()">Save Alert Email</button>
+    <input id="searchBox" placeholder="Search Device">
 
-        <input id="searchBox" placeholder="Search Device">
-    </div>
-
-    <!-- SUMMARY -->
-    <div class="grid">
-        <div class="card"><div class="label">Total Systems</div><div class="value" id="totalSystems">0</div></div>
-        <div class="card"><div class="label">High Usage Systems</div><div class="value" id="highSystems">0</div></div>
-        <div class="card"><div class="label">Total Energy</div><div class="value" id="totalEnergy">0</div></div>
-        <div class="card"><div class="label">Total CO₂</div><div class="value" id="totalCarbon">0</div></div>
-    </div>
-
-    <!-- DEVICES -->
     <div class="grid" id="deviceGrid"></div>
 
-    <!-- LINE GRAPH -->
-    <div style="height:400px; margin-top:20px;">
-        <canvas id="energyChart"></canvas>
-    </div>
+    <canvas id="energyChart" style="height:400px;margin-top:20px;"></canvas>
 </div>
 
 <script>
 
-window.pieCharts = {};
-let searchTimeout;
+/* ===== PARTICLES ===== */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
 
-/* ================= THEME ================= */
-function toggleTheme(){
-    document.body.classList.toggle("dark");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    const btn = document.getElementById("themeBtn");
+let particles = [];
 
-    if(document.body.classList.contains("dark")){
-        btn.innerText = "☀️ Light Mode";
-        localStorage.setItem("theme","dark");
-    } else {
-        btn.innerText = "🌙 Dark Mode";
-        localStorage.setItem("theme","light");
-    }
+for(let i=0;i<80;i++){
+    particles.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*3,
+        dx: (Math.random()-0.5)*1,
+        dy: (Math.random()-0.5)*1
+    });
 }
 
-window.onload = () => {
-    if(localStorage.getItem("theme")==="dark"){
-        document.body.classList.add("dark");
-        document.getElementById("themeBtn").innerText = "☀️ Light Mode";
-    }
-};
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
-/* ================= LOGIN ================= */
+    ctx.fillStyle = "rgba(34,197,94,0.6)";
+
+    particles.forEach(p=>{
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+
+        p.x += p.dx;
+        p.y += p.dy;
+
+        if(p.x<0||p.x>canvas.width) p.dx*=-1;
+        if(p.y<0||p.y>canvas.height) p.dy*=-1;
+    });
+
+    requestAnimationFrame(animate);
+}
+animate();
+
+/* ===== LOGIN ===== */
 async function login(){
-
-    document.getElementById("loader").style.display = "block";
-
     const res = await fetch('/login',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            username:username.value,
-            password:password.value
-        })
+        body:JSON.stringify({username:username.value,password:password.value})
     });
 
     const data = await res.json();
 
-    setTimeout(()=>{
+    if(data.status==='success'){
+        loginBox.style.display='none';
+        dashboard.style.display='block';
+        sidebar.style.display='block';
 
-        document.getElementById("loader").style.display = "none";
-
-        if(data.status==='success'){
-            loginBox.classList.add("fade-out");
-
-            setTimeout(()=>{
-                loginBox.style.display='none';
-                dashboard.style.display='block';
-                sidebar.style.display='block';
-
-                fetchData();
-                loadGraph();
-                setInterval(fetchData,8000);
-            },400);
-
-        } else {
-            loginMsg.innerText='ACCESS DENIED';
-        }
-
-    },700);
+        fetchData();
+        loadGraph();
+        setInterval(fetchData,5000);
+    } else {
+        loginMsg.innerText="Wrong Login";
+    }
 }
 
-async function logout(){
-    await fetch('/logout');
-    location.reload();
-}
+/* ===== SEARCH ===== */
+searchBox.addEventListener("keyup",fetchData);
 
-/* ================= EMAIL ================= */
-async function saveEmail(){
-    const email = document.getElementById('alertEmail').value;
-
-    await fetch('/set_email',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email})
-    });
-
-    alert("Email saved ✔");
-}
-
-/* ================= SEARCH ================= */
-document.getElementById("searchBox").addEventListener("keyup",()=>{
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(fetchData,300);
-});
-
-/* ================= FETCH ================= */
+/* ===== FETCH ===== */
 async function fetchData(){
 
     const res = await fetch('/live');
     const data = await res.json();
 
-    const grid = document.getElementById('deviceGrid');
-    const search = document.getElementById('searchBox').value.toLowerCase();
+    const grid = document.getElementById("deviceGrid");
+    const search = searchBox.value.toLowerCase();
 
-    grid.innerHTML = '';
-
-    let high = 0, totalE = 0, totalC = 0;
+    grid.innerHTML="";
 
     data.devices.forEach((d,i)=>{
 
         if(search && !d.device.toLowerCase().includes(search)) return;
 
-        if(d.power_watts > 70 || d.energy_kwh > 0.1) high++;
+        const id="c"+i;
 
-        totalE += d.energy_kwh * 1000;
-        totalC += d.co2_kg * 1000;
+        const div = document.createElement("div");
+        div.className="card";
 
-        const id = 'c'+i;
-
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        card.innerHTML = `
+        div.innerHTML=`
         <div class="device-title">${d.device}</div>
 
-        <div style="display:flex; gap:12px;">
+        <div>
+            CPU: ${d.cpu_usage.toFixed(1)}%<br>
+            Power: ${d.power_watts.toFixed(1)}W<br>
+            Energy: ${(d.energy_kwh*1000).toFixed(1)}mWh<br>
+            CO₂: ${(d.co2_kg*1000).toFixed(1)}g
+        </div>
 
-            <div>
-                <div class="label">CPU</div><div class="value">${d.cpu_usage.toFixed(1)}%</div>
-                <div class="label">Power</div><div class="value">${d.power_watts.toFixed(1)}W</div>
-                <div class="label">Energy</div><div class="value">${(d.energy_kwh*1000).toFixed(1)}mWh</div>
-                <div class="label">CO₂</div><div class="value">${(d.co2_kg*1000).toFixed(1)}g</div>
-            </div>
-
-            <div style="width:110px;height:110px;">
-                <canvas id="pie_${id}"></canvas>
-            </div>
-
+        <div style="width:120px;height:120px;">
+            <canvas id="pie_${id}"></canvas>
         </div>
 
         <div class="badge ${d.power_watts>70?'high':'normal'}">
-            ${d.power_watts>70?'🔴 High Usage':'🟢 Normal'}
+            ${d.power_watts>70?'HIGH':'NORMAL'}
         </div>
         `;
 
-        grid.appendChild(card);
+        grid.appendChild(div);
 
-        const ctx = document.getElementById(`pie_${id}`).getContext('2d');
+        const ctx2 = document.getElementById("pie_"+id).getContext("2d");
 
-        if(window.pieCharts[id]) window.pieCharts[id].destroy();
-
-        window.pieCharts[id] = new Chart(ctx,{
-            type:'doughnut',
+        new Chart(ctx2,{
+            type:"doughnut",
             data:{
-                labels:['CPU','Power','Energy','CO₂'],
+                labels:["CPU","Power","Energy","CO₂"],
                 datasets:[{
                     data:[
                         d.cpu_usage,
-                        Math.min(d.power_watts,100),
-                        Math.min(d.energy_kwh*1000,100),
-                        Math.min(d.co2_kg*1000,100)
+                        d.power_watts,
+                        d.energy_kwh*1000,
+                        d.co2_kg*1000
                     ],
-                    backgroundColor:['#22c55e','#3b82f6','#f59e0b','#ef4444']
+                    backgroundColor:["#22c55e","#3b82f6","#f59e0b","#ef4444"]
                 }]
             },
             options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                cutout:'65%',
                 plugins:{legend:{display:false}},
+                cutout:"65%",
                 animation:false
             }
         });
     });
-
-    totalSystems.innerText = data.devices.length;
-    highSystems.innerText = high;
-    totalEnergy.innerText = totalE.toFixed(2)+' mWh';
-    totalCarbon.innerText = totalC.toFixed(2)+' g';
-
-    lastUpdated.innerText = 'Last Updated: '+new Date().toLocaleTimeString();
 }
 
-/* ================= GRAPH ================= */
+/* ===== LINE GRAPH ===== */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
 
-    const ctx = energyChart.getContext('2d');
+    const ctx = energyChart.getContext("2d");
 
     if(window.g) window.g.destroy();
 
-    const ds = [];
-    for(const d in data.devices){
-        ds.push({label:d,data:data.devices[d],borderWidth:2});
+    let ds=[];
+    for(let d in data.devices){
+        ds.push({label:d,data:data.devices[d]});
     }
 
     window.g = new Chart(ctx,{
-        type:'line',
-        data:{labels:data.labels,datasets:ds},
-        options:{responsive:true}
+        type:"line",
+        data:{labels:data.labels,datasets:ds}
     });
 }
 
