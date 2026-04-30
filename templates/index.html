@@ -5,13 +5,32 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* ===== THEME SYSTEM ===== */
+        :root {
+            --bg: linear-gradient(135deg, #f8fafc, #eef2ff, #f0fdf4);
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: #334155;
+        }
+
         body {
             margin: 0;
             font-family: Inter, sans-serif;
-            background: linear-gradient(135deg, #f8fafc, #eef2ff, #f0fdf4);
-            color: #1f2937;
+            background: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
         }
 
+        /* ===== LOGIN ===== */
         #loginBox {
             height: 100vh;
             display: flex;
@@ -20,10 +39,10 @@
         }
 
         .login-card, .card {
-            background: #ffffff;
+            background: var(--card);
             border-radius: 18px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border);
         }
 
         .login-card {
@@ -37,7 +56,9 @@
             padding: 12px;
             margin: 8px 0;
             border-radius: 10px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
         }
 
         button {
@@ -49,13 +70,14 @@
             cursor: pointer;
         }
 
+        /* ===== LAYOUT ===== */
         .sidebar {
             width: 240px;
             height: 100vh;
             position: fixed;
-            background: #f8fafc;
+            background: var(--card);
             padding: 25px;
-            border-right: 1px solid #e5e7eb;
+            border-right: 1px solid var(--border);
         }
 
         .sidebar h2 { color: #16a34a; }
@@ -81,6 +103,7 @@
             color: #16a34a;
         }
 
+        /* ===== GRID ===== */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -101,7 +124,7 @@
 
         .label {
             font-size: 13px;
-            color: #6b7280;
+            color: var(--muted);
         }
 
         .value {
@@ -122,11 +145,12 @@
         .high { background: #fdeaea; color: #991b1b; }
 
         canvas {
-            background: #fff;
+            background: var(--card);
             border-radius: 16px;
             padding: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
+
     </style>
 </head>
 
@@ -156,13 +180,18 @@
             <div class="title">Green Computing Dashboard</div>
             <div class="subinfo" id="lastUpdated">Last Updated: --</div>
         </div>
-        <button onclick="logout()">Logout</button>
+
+        <div>
+            <button onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+            <button onclick="logout()">Logout</button>
+        </div>
     </div>
 
     <div style="margin-top:20px;">
         <input id="alertEmail" placeholder="Enter alert email">
         <button onclick="saveEmail()">Save Alert Email</button>
-        <input id="searchBox" placeholder="Search Device" onkeyup="fetchData()">
+
+        <input id="searchBox" placeholder="Search Device">
     </div>
 
     <!-- SUMMARY -->
@@ -186,6 +215,29 @@
 
 window.pieCharts = {};
 
+/* ===== THEME ===== */
+function toggleTheme(){
+    document.body.classList.toggle("dark");
+
+    const btn = document.getElementById("themeBtn");
+
+    if(document.body.classList.contains("dark")){
+        btn.innerText = "☀️ Light Mode";
+        localStorage.setItem("theme","dark");
+    } else {
+        btn.innerText = "🌙 Dark Mode";
+        localStorage.setItem("theme","light");
+    }
+}
+
+window.onload = () => {
+    if(localStorage.getItem("theme")==="dark"){
+        document.body.classList.add("dark");
+        document.getElementById("themeBtn").innerText = "☀️ Light Mode";
+    }
+};
+
+/* ===== LOGIN ===== */
 async function login(){
     const res = await fetch('/login',{
         method:'POST',
@@ -199,9 +251,10 @@ async function login(){
         loginBox.style.display='none';
         dashboard.style.display='block';
         sidebar.style.display='block';
+
         fetchData();
         loadGraph();
-        setInterval(fetchData,8000); // reduced refresh flicker
+        setInterval(fetchData,8000);
     } else {
         loginMsg.innerText='Invalid Login';
     }
@@ -212,22 +265,35 @@ async function logout(){
     location.reload();
 }
 
+/* ===== EMAIL ===== */
 async function saveEmail(){
+    const email = document.getElementById('alertEmail').value;
+
     await fetch('/set_email',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:alertEmail.value})
+        body:JSON.stringify({email})
     });
-    alert('Saved');
+
+    alert("Email saved ✔");
 }
 
+/* ===== SEARCH FIX ===== */
+let searchTimeout;
+document.getElementById("searchBox").addEventListener("keyup",()=>{
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(fetchData,300);
+});
+
+/* ===== FETCH DATA ===== */
 async function fetchData(){
 
     const res = await fetch('/live');
     const data = await res.json();
 
     const grid = document.getElementById('deviceGrid');
-    const search = searchBox.value.toLowerCase();
+    const search = document.getElementById('searchBox').value.toLowerCase();
+
     grid.innerHTML = '';
 
     let high = 0, totalE = 0, totalC = 0;
@@ -251,7 +317,6 @@ async function fetchData(){
 
         <div style="display:flex; align-items:center; gap:12px;">
 
-            <!-- VALUES -->
             <div>
                 <div class="label">⚡ CPU</div>
                 <div class="value">${d.cpu_usage.toFixed(1)}%</div>
@@ -266,7 +331,6 @@ async function fetchData(){
                 <div class="value">${(d.co2_kg*1000).toFixed(1)} g</div>
             </div>
 
-            <!-- PIE CHART -->
             <div style="width:110px; height:110px;">
                 <canvas id="pie_${id}"></canvas>
             </div>
@@ -282,9 +346,7 @@ async function fetchData(){
 
         const ctx = document.getElementById(`pie_${id}`).getContext('2d');
 
-        if(window.pieCharts[id]){
-            window.pieCharts[id].destroy();
-        }
+        if(window.pieCharts[id]) window.pieCharts[id].destroy();
 
         window.pieCharts[id] = new Chart(ctx,{
             type:'doughnut',
@@ -314,9 +376,11 @@ async function fetchData(){
     highSystems.innerText = high;
     totalEnergy.innerText = totalE.toFixed(2)+' mWh';
     totalCarbon.innerText = totalC.toFixed(2)+' g';
+
     lastUpdated.innerText = 'Last Updated: '+new Date().toLocaleTimeString();
 }
 
+/* ===== MAIN GRAPH ===== */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();

@@ -9,35 +9,42 @@ from energy_db import init_db, save_to_db
 app = Flask(__name__)
 app.secret_key = "greencomputing123"
 
-# Initialize DB
+# ========================
+# INIT DB (ONLY ONCE)
+# ========================
 init_db()
 
-# Global states
+# ========================
+# GLOBAL STATES
+# ========================
 latest_sleep = False
 latest_alert = False
 
+# Store email globally (IMPORTANT FIX)
+ALERT_EMAIL = None
 
-# ---------------- REAL EMAIL ALERT FUNCTION ----------------
+
+# ========================
+# EMAIL ALERT FUNCTION
+# ========================
 def send_email_alert(power, energy, device):
-    sender_email = "greencomputingalerts@gmail.com"
+    global ALERT_EMAIL
 
-    # Your 16-character Google App Password
+    sender_email = "greencomputingalerts@gmail.com"
     sender_password = "hskt ejbe iumw ggcw"
 
-    # Receiver email (can be same as sender for testing)
-    receiver = session.get("alert_email", sender_email)
+    receiver = ALERT_EMAIL or sender_email
 
-    subject = "High Energy Usage Alert"
+    subject = "⚠ High Energy Usage Alert"
 
     body = f"""
-⚠ High Energy Usage Alert
+High Energy Alert 🚨
 
 Device: {device}
-Power Consumption: {power} W
-Energy Used: {energy} kWh
+Power: {power} W
+Energy: {energy} kWh
 
-System is consuming unusually high energy.
-Please check the machine immediately.
+Please check system immediately.
 """
 
     msg = MIMEText(body)
@@ -52,29 +59,36 @@ Please check the machine immediately.
         server.sendmail(sender_email, receiver, msg.as_string())
         server.quit()
 
-        print("✅ Email alert sent successfully")
+        print("✅ Email sent")
 
     except Exception as e:
-        print("❌ Email sending failed:", e)
+        print("❌ Email failed:", e)
 
 
-# ---------------- SET EMAIL (FROM UI) ----------------
+# ========================
+# SET EMAIL (FIXED)
+# ========================
 @app.route("/set_email", methods=["POST"])
 def set_email():
-    data = request.json
-    email = data.get("email")
+    global ALERT_EMAIL
 
-    session["alert_email"] = email
+    data = request.json
+    ALERT_EMAIL = data.get("email")
+
     return jsonify({"status": "saved"})
 
 
-# ---------------- HOME ----------------
+# ========================
+# HOME
+# ========================
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# ---------------- ENERGY API ----------------
+# ========================
+# ENERGY PROCESSING
+# ========================
 @app.route("/energy", methods=["POST"])
 def energy_route():
     global latest_sleep, latest_alert
@@ -87,10 +101,8 @@ def energy_route():
     idle = data.get("idle_time", 0)
     device = data.get("device", "unknown")
 
-    # Sleep trigger
     latest_sleep = data.get("sleep_trigger", False)
 
-    # Process energy
     result = process_data(cpu, hours, active, idle)
     result["device"] = device
 
@@ -99,39 +111,26 @@ def energy_route():
     co2 = result.get("co2_kg", 0)
 
     # Alert logic
-    HIGH_POWER_THRESHOLD = 70
-    HIGH_ENERGY_THRESHOLD = 0.1
+    HIGH_POWER = 70
+    HIGH_ENERGY = 0.1
 
-    previous_alert = latest_alert
+    prev = latest_alert
+    latest_alert = (power > HIGH_POWER or energy > HIGH_ENERGY)
 
-    high_usage = False
-    if power > HIGH_POWER_THRESHOLD or energy > HIGH_ENERGY_THRESHOLD:
-        high_usage = True
-
-    latest_alert = high_usage
-
-    # Real email alert only on state change
-    if high_usage and not previous_alert:
+    # send email ONLY on transition
+    if latest_alert and not prev:
         send_email_alert(power, energy, device)
 
-    result["high_usage"] = high_usage
+    result["high_usage"] = latest_alert
 
-    # Save to database
-    save_to_db(
-        device,
-        cpu,
-        hours,
-        active,
-        idle,
-        power,
-        energy,
-        co2
-    )
+    save_to_db(device, cpu, hours, active, idle, power, energy, co2)
 
     return jsonify(result)
 
 
-# ---------------- LIVE DATA (MULTI DEVICE + BAR GRAPH SUPPORT) ----------------
+# ========================
+# LIVE DATA
+# ========================
 @app.route("/live")
 def live_data():
     conn = sqlite3.connect("energy.db")
@@ -142,9 +141,7 @@ def live_data():
                active_time, idle_time
         FROM energy_data
         WHERE id IN (
-            SELECT MAX(id)
-            FROM energy_data
-            GROUP BY device
+            SELECT MAX(id) FROM energy_data GROUP BY device
         )
         ORDER BY id DESC
     """)
@@ -154,15 +151,15 @@ def live_data():
 
     devices = []
 
-    for row in rows:
+    for r in rows:
         devices.append({
-            "device": row[0],
-            "cpu_usage": row[1],
-            "power_watts": row[2],
-            "energy_kwh": row[3],
-            "co2_kg": row[4],
-            "active_time": row[5],
-            "idle_time": row[6]
+            "device": r[0],
+            "cpu_usage": r[1],
+            "power_watts": r[2],
+            "energy_kwh": r[3],
+            "co2_kg": r[4],
+            "active_time": r[5],
+            "idle_time": r[6]
         })
 
     return jsonify({
@@ -172,7 +169,9 @@ def live_data():
     })
 
 
-# ---------------- EXISTING MULTI DEVICE LINE GRAPH DATA ----------------
+# ========================
+# GRAPH DATA
+# ========================
 @app.route("/graph")
 def graph():
     conn = sqlite3.connect("energy.db")
@@ -191,59 +190,57 @@ def graph():
     rows.reverse()
 
     labels = []
-    devices_data = {}
+    devices = {}
 
-    for row in rows:
-        device = row[0]
-        record_id = str(row[1])
-        cpu = row[2]
+    for r in rows:
+        device = r[0]
+        rid = str(r[1])
+        cpu = r[2]
 
-        if record_id not in labels:
-            labels.append(record_id)
+        labels.append(rid)
 
-        if device not in devices_data:
-            devices_data[device] = []
+        if device not in devices:
+            devices[device] = []
 
-        devices_data[device].append(cpu)
+        devices[device].append(cpu)
 
     return jsonify({
         "labels": labels,
-        "devices": devices_data
+        "devices": devices
     })
 
 
-# ---------------- LOGIN ----------------
+# ========================
+# LOGIN
+# ========================
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
 
-    username = data.get("username")
-    password = data.get("password")
-
-    if username == "admin" and password == "1234":
-        session["user"] = username
+    if data["username"] == "admin" and data["password"] == "1234":
+        session["user"] = "admin"
         return jsonify({"status": "success"})
 
     return jsonify({"status": "failed"})
 
 
-# ---------------- LOGOUT ----------------
+# ========================
+# LOGOUT
+# ========================
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    session.pop("alert_email", None)
+    session.clear()
     return jsonify({"status": "logged out"})
 
 
-# ---------------- CHECK LOGIN ----------------
+# ========================
+# CHECK LOGIN
+# ========================
 @app.route("/check_login")
 def check_login():
-    if "user" in session:
-        return jsonify({"logged_in": True})
-    return jsonify({"logged_in": False})
+    return jsonify({"logged_in": "user" in session})
 
 
-# ---------------- RUN SERVER ----------------
+# ========================
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0", port=10000)
