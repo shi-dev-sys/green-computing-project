@@ -26,9 +26,11 @@
             font-family: Inter, sans-serif;
             background: var(--bg);
             color: var(--text);
+            transition: 0.3s;
+            overflow-x: hidden;
         }
 
-        /* ===== PARTICLES LOGIN ===== */
+        /* ================= LOGIN ================= */
         #loginBox {
             height: 100vh;
             display: flex;
@@ -38,23 +40,36 @@
             overflow: hidden;
         }
 
-        canvas#particles {
+        #particles {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+            z-index: 0;
+        }
+
+        .login-glow {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 20%, #22c55e33, transparent 40%),
+                        radial-gradient(circle at 80% 80%, #3b82f633, transparent 40%);
+            animation: move 6s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: scale(1); }
+            to { transform: scale(1.2); }
         }
 
         .login-card {
             z-index: 2;
-            padding: 40px;
             width: 340px;
+            padding: 40px;
             text-align: center;
             background: var(--card);
             border-radius: 18px;
             border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         input {
@@ -63,6 +78,8 @@
             margin: 8px 0;
             border-radius: 10px;
             border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
         }
 
         button {
@@ -74,7 +91,7 @@
             cursor: pointer;
         }
 
-        /* ===== LAYOUT ===== */
+        /* ================= LAYOUT ================= */
         .sidebar {
             width: 240px;
             height: 100vh;
@@ -111,6 +128,7 @@
             padding: 6px 12px;
             border-radius: 999px;
             display: inline-block;
+            margin-top: 8px;
         }
 
         .normal { background:#e8f5e9;color:#166534; }
@@ -125,9 +143,11 @@
 
 <body>
 
+<canvas id="particles"></canvas>
+
 <!-- LOGIN -->
 <div id="loginBox">
-    <canvas id="particles"></canvas>
+    <div class="login-glow"></div>
 
     <div class="login-card">
         <h2>🔐 Admin Login</h2>
@@ -138,73 +158,79 @@
     </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none;">
-    <h2 style="color:#16a34a;">Green Computing</h2>
+    <h2>Green Computing</h2>
 </div>
 
+<!-- MAIN -->
 <div class="main" id="dashboard" style="display:none;">
 
-    <div style="display:flex;justify-content:space-between;">
-        <h2>Dashboard</h2>
-        <button onclick="toggleTheme()">🌙</button>
-    </div>
+    <button onclick="toggleTheme()">🌙 Toggle Theme</button>
 
     <input id="searchBox" placeholder="Search Device">
+    <input id="alertEmail" placeholder="Alert Email">
+    <button onclick="saveEmail()">Save Email</button>
 
     <div class="grid" id="deviceGrid"></div>
 
-    <canvas id="energyChart" style="height:400px;margin-top:20px;"></canvas>
+    <canvas id="energyChart" height="120"></canvas>
 </div>
 
 <script>
 
-/* ===== PARTICLES ===== */
-const canvas = document.getElementById("particles");
-const ctx = canvas.getContext("2d");
+/* ================= PARTICLES ================= */
+const pc = document.getElementById("particles");
+const ctxp = pc.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+pc.width = innerWidth;
+pc.height = innerHeight;
 
 let particles = [];
 
-for(let i=0;i<80;i++){
+for(let i=0;i<70;i++){
     particles.push({
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height,
-        r: Math.random()*3,
-        dx: (Math.random()-0.5)*1,
-        dy: (Math.random()-0.5)*1
+        x:Math.random()*pc.width,
+        y:Math.random()*pc.height,
+        r:Math.random()*2,
+        dx:(Math.random()-0.5)*1,
+        dy:(Math.random()-0.5)*1
     });
 }
 
 function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    ctx.fillStyle = "rgba(34,197,94,0.6)";
+    ctxp.clearRect(0,0,pc.width,pc.height);
 
     particles.forEach(p=>{
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fill();
+        p.x+=p.dx;
+        p.y+=p.dy;
 
-        p.x += p.dx;
-        p.y += p.dy;
+        if(p.x<0||p.x>pc.width)p.dx*=-1;
+        if(p.y<0||p.y>pc.height)p.dy*=-1;
 
-        if(p.x<0||p.x>canvas.width) p.dx*=-1;
-        if(p.y<0||p.y>canvas.height) p.dy*=-1;
+        ctxp.beginPath();
+        ctxp.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctxp.fillStyle="rgba(34,197,94,0.5)";
+        ctxp.fill();
     });
 
     requestAnimationFrame(animate);
 }
 animate();
 
-/* ===== LOGIN ===== */
+/* ================= STATE ================= */
+let pieCharts = {};
+let lineChart;
+
+/* ================= LOGIN ================= */
 async function login(){
     const res = await fetch('/login',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username:username.value,password:password.value})
+        body:JSON.stringify({
+            username:username.value,
+            password:password.value
+        })
     });
 
     const data = await res.json();
@@ -218,45 +244,40 @@ async function login(){
         loadGraph();
         setInterval(fetchData,5000);
     } else {
-        loginMsg.innerText="Wrong Login";
+        loginMsg.innerText="Invalid Login";
     }
 }
 
-/* ===== SEARCH ===== */
+/* ================= SEARCH ================= */
 searchBox.addEventListener("keyup",fetchData);
 
-/* ===== FETCH ===== */
+/* ================= FETCH ================= */
 async function fetchData(){
-
     const res = await fetch('/live');
     const data = await res.json();
 
     const grid = document.getElementById("deviceGrid");
-    const search = searchBox.value.toLowerCase();
-
     grid.innerHTML="";
 
     data.devices.forEach((d,i)=>{
 
-        if(search && !d.device.toLowerCase().includes(search)) return;
-
         const id="c"+i;
 
-        const div = document.createElement("div");
-        div.className="card";
+        const card=document.createElement("div");
+        card.className="card";
 
-        div.innerHTML=`
+        card.innerHTML=`
         <div class="device-title">${d.device}</div>
 
-        <div>
-            CPU: ${d.cpu_usage.toFixed(1)}%<br>
-            Power: ${d.power_watts.toFixed(1)}W<br>
-            Energy: ${(d.energy_kwh*1000).toFixed(1)}mWh<br>
-            CO₂: ${(d.co2_kg*1000).toFixed(1)}g
-        </div>
+        <div style="display:flex;gap:10px;">
+            <div>
+                CPU ${d.cpu_usage.toFixed(1)}%<br>
+                Power ${d.power_watts.toFixed(1)}W<br>
+                Energy ${(d.energy_kwh*1000).toFixed(1)}mWh<br>
+                CO₂ ${(d.co2_kg*1000).toFixed(1)}g
+            </div>
 
-        <div style="width:120px;height:120px;">
-            <canvas id="pie_${id}"></canvas>
+            <canvas id="pie_${id}" width="100" height="100"></canvas>
         </div>
 
         <div class="badge ${d.power_watts>70?'high':'normal'}">
@@ -264,48 +285,44 @@ async function fetchData(){
         </div>
         `;
 
-        grid.appendChild(div);
+        grid.appendChild(card);
 
-        const ctx2 = document.getElementById("pie_"+id).getContext("2d");
+        const ctx=document.getElementById("pie_"+id).getContext("2d");
 
-        new Chart(ctx2,{
+        if(pieCharts[id]) pieCharts[id].destroy();
+
+        pieCharts[id]=new Chart(ctx,{
             type:"doughnut",
             data:{
                 labels:["CPU","Power","Energy","CO₂"],
                 datasets:[{
                     data:[
                         d.cpu_usage,
-                        d.power_watts,
-                        d.energy_kwh*1000,
-                        d.co2_kg*1000
+                        Math.min(d.power_watts,100),
+                        Math.min(d.energy_kwh*1000,100),
+                        Math.min(d.co2_kg*1000,100)
                     ],
                     backgroundColor:["#22c55e","#3b82f6","#f59e0b","#ef4444"]
                 }]
             },
-            options:{
-                plugins:{legend:{display:false}},
-                cutout:"65%",
-                animation:false
-            }
+            options:{cutout:"65%",plugins:{legend:{display:false}}}
         });
     });
 }
 
-/* ===== LINE GRAPH ===== */
+/* ================= LINE GRAPH ================= */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
 
-    const ctx = energyChart.getContext("2d");
-
-    if(window.g) window.g.destroy();
+    if(lineChart) lineChart.destroy();
 
     let ds=[];
     for(let d in data.devices){
-        ds.push({label:d,data:data.devices[d]});
+        ds.push({label:d,data:data.devices[d],borderWidth:2});
     }
 
-    window.g = new Chart(ctx,{
+    lineChart=new Chart(energyChart,{
         type:"line",
         data:{labels:data.labels,datasets:ds}
     });
