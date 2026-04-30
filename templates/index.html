@@ -108,7 +108,6 @@
         }
         .normal { background: #e8f5e9; color: #166534; }
         .high { background: #fdeaea; color: #991b1b; }
-        
         canvas {
             background: #ffffff;
             border-radius: 16px;
@@ -164,125 +163,81 @@
 </div>
 
 <script>
-async function login() {
-    const res = await fetch('/login', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value
-        })
-    });
+async function login(){
+    const res = await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value,password:password.value})});
     const data = await res.json();
-    if (data.status === 'success') {
-        loginBox.style.display = 'none';
-        dashboard.style.display = 'block';
-        sidebar.style.display = 'block';
+    if(data.status==='success'){
+        loginBox.style.display='none';
+        dashboard.style.display='block';
+        sidebar.style.display='block';
         fetchData();
         loadGraph();
-        setInterval(fetchData, 3000);
-    } else {
-        loginMsg.innerText = 'Invalid Login';
-    }
+        setInterval(fetchData,3000);
+    } else loginMsg.innerText='Invalid Login';
 }
 
-async function logout() {
-    await fetch('/logout');
-    location.reload();
+async function logout(){await fetch('/logout');location.reload();}
+
+async function saveEmail(){
+    await fetch('/set_email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:alertEmail.value})});
+    alert('Saved');
 }
 
-async function saveEmail() {
-    await fetch('/set_email', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ email: alertEmail.value })
-    });
-    alert('Alert email saved successfully!');
-}
+async function fetchData(){
+    const res=await fetch('/live');
+    const data=await res.json();
+    const grid=document.getElementById('deviceGrid');
+    const search=searchBox.value.toLowerCase();
+    grid.innerHTML='';
 
-async function fetchData() {
-    const res = await fetch('/live');
-    const data = await res.json();
-    const grid = document.getElementById('deviceGrid');
-    const search = document.getElementById('searchBox').value.toLowerCase();
-    grid.innerHTML = '';
+    let high=0,totalE=0,totalC=0;
 
-    let totalEnergy = 0;
-    let totalCarbon = 0;
-    let highCount = 0;
+    data.devices.forEach((d,i)=>{
+        if(search && !d.device.toLowerCase().includes(search)) return;
+        if(d.power_watts>70||d.energy_kwh>0.1) high++;
+        totalE+=d.energy_kwh*1000;
+        totalC+=d.co2_kg*1000;
 
-    data.devices.forEach(device => {
-        if (search && !device.device.toLowerCase().includes(search)) return;
+        const id='c'+i;
 
-        const high = device.power_watts > 70 || device.energy_kwh > 0.1;
-        if (high) highCount++;
-        totalEnergy += device.energy_kwh * 1000;
-        totalCarbon += device.co2_kg * 1000;
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`
+        <div class="device-title">${d.device}</div>
 
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <div class="device-title">$${device.device}</div>
+        <div class="label">CPU Usage</div><div class="value">${d.cpu_usage.toFixed(2)}%</div>
 
-            <div class="label">CPU Usage</div>
-            <div class="value">$${device.cpu_usage.toFixed(2)}%</div>
+        <div class="label">Power</div><div class="value">${d.power_watts.toFixed(2)} W</div>
 
-            <div class="label">Power</div>
-            <div class="value">$${device.power_watts.toFixed(2)} W</div>
+        <div class="label">Energy</div><div class="value">${(d.energy_kwh*1000).toFixed(2)} mWh</div>
 
-            <div class="label">Energy</div>
-            <div class="value">$${(device.energy_kwh*1000).toFixed(2)} mWh</div>
+        <div class="label">CO₂</div><div class="value">${(d.co2_kg*1000).toFixed(2)} g</div>
 
-            <div class="label">CO₂</div>
-            <div class="value">$${(device.co2_kg*1000).toFixed(2)} g</div>
+        <div style="height:160px;"><canvas id="${id}"></canvas></div>
 
-            <div style="height:180px; margin-top:15px;">
-                <canvas id="miniChart_$${device.device.replace(/\s+/g,'_')}"></canvas>
-            </div>
+        <div class="badge ${d.power_watts>70?'high':'normal'}">${d.power_watts>70?'High':'Normal'}</div>`;
 
-            <div class="badge $${high ? 'high' : 'normal'}">$${high ? '🔴 High Usage' : '🟢 Normal'}</div>
-        `;
         grid.appendChild(card);
+
+        const ctx=document.getElementById(id).getContext('2d');
+        new Chart(ctx,{type:'bar',data:{labels:['CPU','Power','Energy','CO₂'],datasets:[{data:[d.cpu_usage,Math.min(d.power_watts,100),Math.min(d.energy_kwh*1000,100),Math.min(d.co2_kg*1000,100)]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
     });
 
-    totalSystems.innerText = data.devices.length;
-    highSystems.innerText = highCount;
-    totalEnergy.innerText = totalEnergy.toFixed(2) + ' mWh';
-    totalCarbon.innerText = totalCarbon.toFixed(2) + ' g';
-    lastUpdated.innerText = 'Last Updated: ' + new Date().toLocaleTimeString();
-
-    if (highCount > 0) {
-        console.log('High usage detected');
-    }
+    totalSystems.innerText=data.devices.length;
+    highSystems.innerText=high;
+    totalEnergy.innerText=totalE.toFixed(2)+' mWh';
+    totalCarbon.innerText=totalC.toFixed(2)+' g';
+    lastUpdated.innerText='Last Updated: '+new Date().toLocaleTimeString();
 }
 
-async function loadGraph() {
-    const res = await fetch('/graph');
-    const data = await res.json();
-    const ctx = document.getElementById('energyChart').getContext('2d');
-
-    if (window.energyChartInstance) window.energyChartInstance.destroy();
-
-    const datasets = [];
-    for (const device in data.devices) {
-        datasets.push({
-            label: device,
-            data: data.devices[device],
-            borderWidth: 2,
-            tension: 0.4,
-            fill: false
-        });
-    }
-
-    window.energyChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: { labels: data.labels, datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
+async function loadGraph(){
+    const res=await fetch('/graph');
+    const data=await res.json();
+    const ctx=energyChart.getContext('2d');
+    if(window.g) window.g.destroy();
+    const ds=[];
+    for(const d in data.devices) ds.push({label:d,data:data.devices[d],borderWidth:2});
+    window.g=new Chart(ctx,{type:'line',data:{labels:data.labels,datasets:ds},options:{responsive:true}});
 }
 </script>
 </body>
