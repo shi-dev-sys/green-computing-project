@@ -163,14 +163,14 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none;">
-    <h2>⚡ Green Compute</h2>
+    <h2>Green Computing Lab Energy & Carbon Emission Analyser</h2>
 </div>
 
 <!-- MAIN -->
 <div class="main" id="dashboard" style="display:none;">
 
     <div class="topbar">
-        <div class="title">🌱 Energy Intelligence Dashboard</div>
+        <div class="title">Green Computing Dashboard</div>
         <button onclick="logout()">Logout</button>
     </div>
 
@@ -183,9 +183,17 @@
     <!-- MULTI DEVICE CARDS -->
     <div class="grid" id="deviceGrid"></div>
 
-    <!-- GRAPH FIXED -->
+    <!-- EXISTING LINE GRAPH -->
     <div style="height:400px; margin-top:30px;">
         <canvas id="energyChart"></canvas>
+    </div>
+
+    <!-- NEW BAR GRAPH SECTION -->
+    <div style="height:450px; margin-top:40px;">
+        <h2 style="color:#22c55e; margin-bottom:15px;">
+            Green Computing Lab Energy & Carbon Emission Analyser
+        </h2>
+        <canvas id="systemBarChart"></canvas>
     </div>
 
 </div>
@@ -212,7 +220,12 @@ async function login() {
 
         fetchData();
         loadGraph();
-        setInterval(fetchData, 3000);
+        loadBarGraph();
+
+        setInterval(() => {
+            fetchData();
+            loadBarGraph();
+        }, 3000);
     } else {
         document.getElementById("loginMsg").innerText = "Invalid Login";
     }
@@ -247,7 +260,6 @@ async function fetchData() {
 
     data.devices.forEach(device => {
         const card = document.createElement("div");
-
         card.className = "card";
 
         if (device.power_watts > 70 || device.energy_kwh > 0.1) {
@@ -281,19 +293,17 @@ async function fetchData() {
     });
 }
 
-// FINAL UPGRADED MULTI-DEVICE GRAPH
+// EXISTING MULTI-DEVICE LINE GRAPH
 async function loadGraph() {
     const res = await fetch("/graph");
     const data = await res.json();
 
     const ctx = document.getElementById("energyChart").getContext("2d");
 
-    // destroy old chart if already exists
     if (window.energyChartInstance) {
         window.energyChartInstance.destroy();
     }
 
-    // create datasets for each device
     const datasets = [];
 
     for (const device in data.devices) {
@@ -315,6 +325,75 @@ async function loadGraph() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// NEW SYSTEM-WISE BAR GRAPH
+async function loadBarGraph() {
+    const res = await fetch("/live");
+    const data = await res.json();
+
+    const labels = [];
+    const cpuData = [];
+    const powerData = [];
+    const energyData = [];
+    const carbonData = [];
+
+    data.devices.forEach(device => {
+        labels.push(device.device);
+        cpuData.push(device.cpu_usage);
+        powerData.push(device.power_watts);
+        energyData.push(device.energy_kwh * 1000);
+        carbonData.push(device.co2_kg * 1000);
+    });
+
+    const ctx = document.getElementById("systemBarChart").getContext("2d");
+
+    if (window.barChartInstance) {
+        window.barChartInstance.destroy();
+    }
+
+    window.barChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "CPU Usage (%)",
+                    data: cpuData,
+                    borderWidth: 1
+                },
+                {
+                    label: "Power (W)",
+                    data: powerData,
+                    borderWidth: 1
+                },
+                {
+                    label: "Energy (mWh)",
+                    data: energyData,
+                    borderWidth: 1
+                },
+                {
+                    label: "CO₂ (g)",
+                    data: carbonData,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "top"
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true

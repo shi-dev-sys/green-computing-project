@@ -19,7 +19,6 @@ latest_alert = False
 
 # ---------------- REAL EMAIL ALERT FUNCTION ----------------
 def send_email_alert(power, energy, device):
-    # Your Gmail
     sender_email = "greencomputingalerts@gmail.com"
 
     # Your 16-character Google App Password
@@ -88,10 +87,10 @@ def energy_route():
     idle = data.get("idle_time", 0)
     device = data.get("device", "unknown")
 
-    # 💤 Sleep trigger
+    # Sleep trigger
     latest_sleep = data.get("sleep_trigger", False)
 
-    # ⚡ Process energy
+    # Process energy
     result = process_data(cpu, hours, active, idle)
     result["device"] = device
 
@@ -99,7 +98,7 @@ def energy_route():
     energy = result.get("energy_kwh", 0)
     co2 = result.get("co2_kg", 0)
 
-    # 🔥 ALERT LOGIC
+    # Alert logic
     HIGH_POWER_THRESHOLD = 70
     HIGH_ENERGY_THRESHOLD = 0.1
 
@@ -111,14 +110,13 @@ def energy_route():
 
     latest_alert = high_usage
 
-    # 📧 REAL EMAIL ALERT (ONLY ON STATE CHANGE)
+    # Real email alert only on state change
     if high_usage and not previous_alert:
         send_email_alert(power, energy, device)
 
-    # send to frontend
     result["high_usage"] = high_usage
 
-    # 💾 SAVE TO DATABASE
+    # Save to database
     save_to_db(
         device,
         cpu,
@@ -133,7 +131,7 @@ def energy_route():
     return jsonify(result)
 
 
-# ---------------- LIVE DATA (MULTI DEVICE) ----------------
+# ---------------- LIVE DATA (MULTI DEVICE + BAR GRAPH SUPPORT) ----------------
 @app.route("/live")
 def live_data():
     conn = sqlite3.connect("energy.db")
@@ -164,7 +162,7 @@ def live_data():
             "energy_kwh": row[3],
             "co2_kg": row[4],
             "active_time": row[5],
-            "idle_time": row[6],
+            "idle_time": row[6]
         })
 
     return jsonify({
@@ -174,7 +172,7 @@ def live_data():
     })
 
 
-# ---------------- MULTI DEVICE GRAPH DATA ----------------
+# ---------------- EXISTING MULTI DEVICE LINE GRAPH DATA ----------------
 @app.route("/graph")
 def graph():
     conn = sqlite3.connect("energy.db")
