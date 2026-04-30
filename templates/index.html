@@ -3,154 +3,118 @@
 <head>
     <title>Green Computing Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         body {
             margin: 0;
-            font-family: "Inter", sans-serif;
-            background: radial-gradient(circle at top, #0b1220, #020617);
-            color: #e5e7eb;
-            overflow-x: hidden;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(135deg, #f0fdf4, #eff6ff, #ffffff);
+            color: #1f2937;
         }
-
         #loginBox {
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-
-        .login-card {
-            background: rgba(255,255,255,0.06);
-            backdrop-filter: blur(20px);
-            padding: 40px;
+        .login-card, .card {
+            background: white;
             border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 0 30px rgba(34,197,94,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+        .login-card {
+            padding: 40px;
+            width: 340px;
             text-align: center;
-            width: 320px;
         }
-
-        .login-card h2 {
-            color: #22c55e;
-        }
-
         input {
             width: 90%;
             padding: 12px;
             margin: 8px 0;
             border-radius: 10px;
-            border: none;
-            outline: none;
-            background: rgba(255,255,255,0.08);
-            color: white;
+            border: 1px solid #d1d5db;
+            background: #fff;
         }
-
         button {
             background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
             border: none;
             padding: 10px 18px;
             border-radius: 10px;
-            color: white;
             cursor: pointer;
-            margin-top: 10px;
         }
-
-        button:hover {
-            transform: scale(1.05);
-        }
-
         .sidebar {
             width: 240px;
             height: 100vh;
             position: fixed;
-            background: rgba(15,23,42,0.8);
+            background: #ffffff;
             padding: 25px;
-            border-right: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid #e5e7eb;
         }
-
-        .sidebar h2 {
-            color: #22c55e;
-            font-size: 20px;
-        }
-
+        .sidebar h2 { color: #16a34a; }
         .main {
-            margin-left: 260px;
+            margin-left: 270px;
             padding: 25px;
         }
-
         .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
         .title {
-            font-size: 22px;
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
         }
-
+        .subinfo {
+            font-size: 14px;
+            color: #16a34a;
+            margin-top: 6px;
+        }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 18px;
-            margin-top: 25px;
+            margin-top: 20px;
         }
-
         .card {
-            background: rgba(255,255,255,0.05);
             padding: 18px;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: 0.3s;
+            transition: .3s;
         }
-
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 20px rgba(34,197,94,0.3);
+            transform: translateY(-4px);
         }
-
         .label {
-            color: #9ca3af;
             font-size: 13px;
+            color: #6b7280;
             margin-top: 10px;
         }
-
         .value {
             font-size: 18px;
             font-weight: 600;
-            margin-top: 6px;
         }
-
         .device-title {
             font-size: 18px;
-            color: #22c55e;
-            margin-bottom: 12px;
+            font-weight: 700;
+            color: #16a34a;
+            margin-bottom: 10px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
             font-weight: 600;
-        }
-
-        .alert-high {
-            border-left: 5px solid #ef4444;
-            box-shadow: 0 0 20px rgba(239,68,68,0.4);
-        }
-
-        .email-box {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        canvas {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 10px;
-        }
-
-        progress {
-            width: 100%;
-            height: 10px;
             margin-top: 8px;
-            border-radius: 10px;
-            overflow: hidden;
+        }
+        .normal { background: #dcfce7; color: #166534; }
+        .high { background: #fee2e2; color: #991b1b; }
+        
+        canvas {
+            background: white;
+            border-radius: 16px;
+            padding: 10px;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
     </style>
 </head>
@@ -158,7 +122,7 @@
 
 <div id="loginBox">
     <div class="login-card">
-        <h2>🔐 Admin Login</h2>
+        <h2 style="color:#16a34a;">🔐 Admin Login</h2>
         <input id="username" placeholder="Username"><br>
         <input id="password" type="password" placeholder="Password"><br>
         <button onclick="login()">Login</button>
@@ -171,51 +135,54 @@
 </div>
 
 <div class="main" id="dashboard" style="display:none;">
-
     <div class="topbar">
-        <div class="title">Green Computing Dashboard</div>
+        <div>
+            <div class="title">Green Computing Dashboard</div>
+            <div class="subinfo" id="lastUpdated">Last Updated: --</div>
+        </div>
         <button onclick="logout()">Logout</button>
     </div>
 
-    <div class="email-box">
+    <div style="margin-top:20px;">
         <input id="alertEmail" placeholder="Enter alert email">
         <button onclick="saveEmail()">Save Alert Email</button>
+        <input id="searchBox" placeholder="Search Device" onkeyup="fetchData()">
+    </div>
+
+    <div class="grid">
+        <div class="card"><div class="label">Total Systems</div><div class="value" id="totalSystems">0</div></div>
+        <div class="card"><div class="label">High Usage Systems</div><div class="value" id="highSystems">0</div></div>
+        <div class="card"><div class="label">Total Energy</div><div class="value" id="totalEnergy">0</div></div>
+        <div class="card"><div class="label">Total CO₂</div><div class="value" id="totalCarbon">0</div></div>
     </div>
 
     <div class="grid" id="deviceGrid"></div>
 
-    <div style="height:400px; margin-top:30px;">
+    <div style="height:400px;">
         <canvas id="energyChart"></canvas>
     </div>
-
 </div>
 
 <script>
 async function login() {
     const res = await fetch('/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
             username: document.getElementById('username').value,
             password: document.getElementById('password').value
         })
     });
-
     const data = await res.json();
-
     if (data.status === 'success') {
-        document.getElementById('loginBox').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('sidebar').style.display = 'block';
-
+        loginBox.style.display = 'none';
+        dashboard.style.display = 'block';
+        sidebar.style.display = 'block';
         fetchData();
         loadGraph();
-
-        setInterval(() => {
-            fetchData();
-        }, 3000);
+        setInterval(fetchData, 3000);
     } else {
-        document.getElementById('loginMsg').innerText = 'Invalid Login';
+        loginMsg.innerText = 'Invalid Login';
     }
 }
 
@@ -225,75 +192,101 @@ async function logout() {
 }
 
 async function saveEmail() {
-    const email = document.getElementById('alertEmail').value;
-
     await fetch('/set_email', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ email: email })
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: alertEmail.value })
     });
-
     alert('Alert email saved successfully!');
 }
 
 async function fetchData() {
     const res = await fetch('/live');
     const data = await res.json();
-
     const grid = document.getElementById('deviceGrid');
+    const search = document.getElementById('searchBox').value.toLowerCase();
     grid.innerHTML = '';
 
+    let totalEnergy = 0;
+    let totalCarbon = 0;
+    let highCount = 0;
+
     data.devices.forEach(device => {
+        if (search && !device.device.toLowerCase().includes(search)) return;
+
+        const high = device.power_watts > 70 || device.energy_kwh > 0.1;
+        if (high) highCount++;
+        totalEnergy += device.energy_kwh * 1000;
+        totalCarbon += device.co2_kg * 1000;
+
         const card = document.createElement('div');
         card.className = 'card';
-
-        if (device.power_watts > 70 || device.energy_kwh > 0.1) {
-            card.classList.add('alert-high');
-        }
-
         card.innerHTML = `
             <div class="device-title">${device.device}</div>
-
-            <div class="label">CPU Usage</div>
-            <div class="value">${device.cpu_usage.toFixed(2)}%</div>
-            <progress value="${device.cpu_usage.toFixed(2)}" max="100"></progress>
-
-            <div class="label">Power</div>
-            <div class="value">${device.power_watts.toFixed(2)} W</div>
-            <progress value="${Math.min(device.power_watts, 100)}" max="100"></progress>
-
-            <div class="label">Energy</div>
-            <div class="value">${(device.energy_kwh * 1000).toFixed(3)} mWh</div>
-            <progress value="${Math.min(device.energy_kwh * 1000, 100)}" max="100"></progress>
-
-            <div class="label">CO₂</div>
-            <div class="value">${(device.co2_kg * 1000).toFixed(3)} g</div>
-            <progress value="${Math.min(device.co2_kg * 1000, 100)}" max="100"></progress>
-
-            <div class="label">Status</div>
-            <div class="value">
-                ${(device.power_watts > 70 || device.energy_kwh > 0.1)
-                    ? '⚠ High Usage'
-                    : '✅ Normal'}
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div style="flex:1;">
+                    <div class="label">CPU Usage</div>
+                    <div class="value">${device.cpu_usage.toFixed(2)}%</div>
+                </div>
+                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
+                    <div style="width:${Math.min(device.cpu_usage,100)}%; height:100%; background:#22c55e;"></div>
+                </div>
             </div>
-        `;
 
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div style="flex:1;">
+                    <div class="label">Power</div>
+                    <div class="value">${device.power_watts.toFixed(2)} W</div>
+                </div>
+                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
+                    <div style="width:${Math.min(device.power_watts,100)}%; height:100%; background:#3b82f6;"></div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div style="flex:1;">
+                    <div class="label">Energy</div>
+                    <div class="value">${(device.energy_kwh*1000).toFixed(2)} mWh</div>
+                </div>
+                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
+                    <div style="width:${Math.min(device.energy_kwh*1000,100)}%; height:100%; background:#f59e0b;"></div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div style="flex:1;">
+                    <div class="label">CO₂</div>
+                    <div class="value">${(device.co2_kg*1000).toFixed(2)} g</div>
+                </div>
+                <div style="width:90px; height:12px; background:#e5e7eb; border-radius:10px; overflow:hidden;">
+                    <div style="width:${Math.min(device.co2_kg*1000,100)}%; height:100%; background:#ef4444;"></div>
+                </div>
+            </div>
+
+            <div class="badge ${high ? 'high' : 'normal'}">${high ? '🔴 High Usage' : '🟢 Normal'}</div>
+        `;
         grid.appendChild(card);
     });
+
+    totalSystems.innerText = data.devices.length;
+    highSystems.innerText = highCount;
+    totalEnergy.innerText = totalEnergy.toFixed(2) + ' mWh';
+    totalCarbon.innerText = totalCarbon.toFixed(2) + ' g';
+    lastUpdated.innerText = 'Last Updated: ' + new Date().toLocaleTimeString();
+
+    if (highCount > 0) {
+        console.log('High usage detected');
+    }
 }
 
 async function loadGraph() {
     const res = await fetch('/graph');
     const data = await res.json();
-
     const ctx = document.getElementById('energyChart').getContext('2d');
 
-    if (window.energyChartInstance) {
-        window.energyChartInstance.destroy();
-    }
+    if (window.energyChartInstance) window.energyChartInstance.destroy();
 
     const datasets = [];
-
     for (const device in data.devices) {
         datasets.push({
             label: device,
@@ -306,22 +299,14 @@ async function loadGraph() {
 
     window.energyChartInstance = new Chart(ctx, {
         type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: datasets
-        },
+        data: { labels: data.labels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+            scales: { y: { beginAtZero: true } }
         }
     });
 }
 </script>
-
 </body>
 </html>
