@@ -5,7 +5,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* ===== THEME SYSTEM ===== */
+        /* ================= THEME ================= */
         :root {
             --bg: linear-gradient(135deg, #f8fafc, #eef2ff, #f0fdf4);
             --card: #ffffff;
@@ -30,25 +30,52 @@
             transition: all 0.3s ease;
         }
 
-        /* ===== LOGIN ===== */
+        /* ================= LOGIN ================= */
         #loginBox {
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .login-card, .card {
-            background: var(--card);
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 1px solid var(--border);
+        .login-glow {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 20%, #22c55e33, transparent 40%),
+                        radial-gradient(circle at 80% 80%, #3b82f633, transparent 40%);
+            animation: floatBg 6s infinite alternate ease-in-out;
+        }
+
+        @keyframes floatBg {
+            from { transform: scale(1); }
+            to { transform: scale(1.2); }
         }
 
         .login-card {
             padding: 40px;
             width: 340px;
             text-align: center;
+            background: var(--card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 2;
+        }
+
+        .boot-text {
+            font-size: 11px;
+            color: #22c55e;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.4; }
         }
 
         input {
@@ -70,7 +97,28 @@
             cursor: pointer;
         }
 
-        /* ===== LAYOUT ===== */
+        .loader {
+            display: none;
+            margin: 10px auto;
+            width: 22px;
+            height: 22px;
+            border: 3px solid #334155;
+            border-top: 3px solid #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: 0.5s;
+        }
+
+        /* ================= LAYOUT ================= */
         .sidebar {
             width: 240px;
             height: 100vh;
@@ -93,17 +141,11 @@
             align-items: center;
         }
 
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-        }
+        .title { font-size: 24px; font-weight: 700; }
 
-        .subinfo {
-            font-size: 14px;
-            color: #16a34a;
-        }
+        .subinfo { font-size: 14px; color: #16a34a; }
 
-        /* ===== GRID ===== */
+        /* ================= GRID ================= */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -113,6 +155,9 @@
 
         .card {
             padding: 18px;
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
         }
 
         .device-title {
@@ -122,15 +167,9 @@
             margin-bottom: 10px;
         }
 
-        .label {
-            font-size: 13px;
-            color: var(--muted);
-        }
+        .label { font-size: 13px; color: var(--muted); }
 
-        .value {
-            font-size: 18px;
-            font-weight: 600;
-        }
+        .value { font-size: 18px; font-weight: 600; }
 
         .badge {
             display: inline-block;
@@ -148,31 +187,41 @@
             background: var(--card);
             border-radius: 16px;
             padding: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
 
+        .loader { display:none; }
     </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
 <div id="loginBox">
+    <div class="login-glow"></div>
+
     <div class="login-card">
+
+        <div class="boot-text">SYSTEM BOOT SEQUENCE ACTIVE...</div>
+
         <h2 style="color:#16a34a;">🔐 Admin Login</h2>
-        <input id="username" placeholder="Username"><br>
-        <input id="password" type="password" placeholder="Password"><br>
-        <button onclick="login()">Login</button>
+
+        <input id="username" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+
+        <button onclick="login()">ACCESS SYSTEM</button>
+
+        <div class="loader" id="loader"></div>
+
         <p id="loginMsg" style="color:red;"></p>
     </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- ================= SIDEBAR ================= -->
 <div class="sidebar" id="sidebar" style="display:none;">
     <h2>Green Computing Lab Energy & Carbon Emission Analyser</h2>
 </div>
 
-<!-- MAIN -->
+<!-- ================= MAIN ================= -->
 <div class="main" id="dashboard" style="display:none;">
 
     <div class="topbar">
@@ -205,7 +254,7 @@
     <!-- DEVICES -->
     <div class="grid" id="deviceGrid"></div>
 
-    <!-- MAIN GRAPH -->
+    <!-- LINE GRAPH -->
     <div style="height:400px; margin-top:20px;">
         <canvas id="energyChart"></canvas>
     </div>
@@ -214,8 +263,9 @@
 <script>
 
 window.pieCharts = {};
+let searchTimeout;
 
-/* ===== THEME ===== */
+/* ================= THEME ================= */
 function toggleTheme(){
     document.body.classList.toggle("dark");
 
@@ -237,27 +287,44 @@ window.onload = () => {
     }
 };
 
-/* ===== LOGIN ===== */
+/* ================= LOGIN ================= */
 async function login(){
+
+    document.getElementById("loader").style.display = "block";
+
     const res = await fetch('/login',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username:username.value,password:password.value})
+        body:JSON.stringify({
+            username:username.value,
+            password:password.value
+        })
     });
 
     const data = await res.json();
 
-    if(data.status==='success'){
-        loginBox.style.display='none';
-        dashboard.style.display='block';
-        sidebar.style.display='block';
+    setTimeout(()=>{
 
-        fetchData();
-        loadGraph();
-        setInterval(fetchData,8000);
-    } else {
-        loginMsg.innerText='Invalid Login';
-    }
+        document.getElementById("loader").style.display = "none";
+
+        if(data.status==='success'){
+            loginBox.classList.add("fade-out");
+
+            setTimeout(()=>{
+                loginBox.style.display='none';
+                dashboard.style.display='block';
+                sidebar.style.display='block';
+
+                fetchData();
+                loadGraph();
+                setInterval(fetchData,8000);
+            },400);
+
+        } else {
+            loginMsg.innerText='ACCESS DENIED';
+        }
+
+    },700);
 }
 
 async function logout(){
@@ -265,7 +332,7 @@ async function logout(){
     location.reload();
 }
 
-/* ===== EMAIL ===== */
+/* ================= EMAIL ================= */
 async function saveEmail(){
     const email = document.getElementById('alertEmail').value;
 
@@ -278,14 +345,13 @@ async function saveEmail(){
     alert("Email saved ✔");
 }
 
-/* ===== SEARCH FIX ===== */
-let searchTimeout;
+/* ================= SEARCH ================= */
 document.getElementById("searchBox").addEventListener("keyup",()=>{
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(fetchData,300);
 });
 
-/* ===== FETCH DATA ===== */
+/* ================= FETCH ================= */
 async function fetchData(){
 
     const res = await fetch('/live');
@@ -315,23 +381,16 @@ async function fetchData(){
         card.innerHTML = `
         <div class="device-title">${d.device}</div>
 
-        <div style="display:flex; align-items:center; gap:12px;">
+        <div style="display:flex; gap:12px;">
 
             <div>
-                <div class="label">⚡ CPU</div>
-                <div class="value">${d.cpu_usage.toFixed(1)}%</div>
-
-                <div class="label">🔌 Power</div>
-                <div class="value">${d.power_watts.toFixed(1)} W</div>
-
-                <div class="label">🌱 Energy</div>
-                <div class="value">${(d.energy_kwh*1000).toFixed(1)} mWh</div>
-
-                <div class="label">🌍 CO₂</div>
-                <div class="value">${(d.co2_kg*1000).toFixed(1)} g</div>
+                <div class="label">CPU</div><div class="value">${d.cpu_usage.toFixed(1)}%</div>
+                <div class="label">Power</div><div class="value">${d.power_watts.toFixed(1)}W</div>
+                <div class="label">Energy</div><div class="value">${(d.energy_kwh*1000).toFixed(1)}mWh</div>
+                <div class="label">CO₂</div><div class="value">${(d.co2_kg*1000).toFixed(1)}g</div>
             </div>
 
-            <div style="width:110px; height:110px;">
+            <div style="width:110px;height:110px;">
                 <canvas id="pie_${id}"></canvas>
             </div>
 
@@ -380,7 +439,7 @@ async function fetchData(){
     lastUpdated.innerText = 'Last Updated: '+new Date().toLocaleTimeString();
 }
 
-/* ===== MAIN GRAPH ===== */
+/* ================= GRAPH ================= */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
