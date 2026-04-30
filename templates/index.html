@@ -30,6 +30,17 @@
             transition: all 0.3s ease;
         }
 
+        /* ===== PARTICLE BACKGROUND ===== */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
         /* ===== LOGIN ===== */
         #loginBox {
             height: 100vh;
@@ -156,6 +167,9 @@
 
 <body>
 
+<!-- 🌿 PARTICLE CANVAS -->
+<canvas id="particleCanvas"></canvas>
+
 <!-- LOGIN -->
 <div id="loginBox">
     <div class="login-card">
@@ -215,7 +229,85 @@
 
 window.pieCharts = {};
 
-/* ===== THEME ===== */
+/* ===== PARTICLE SYSTEM ===== */
+const canvas = document.getElementById("particleCanvas");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.speedY = Math.random() * 1 - 0.5;
+    }
+
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x < 0) this.x = canvas.width;
+        if (this.x > canvas.width) this.x = 0;
+        if (this.y < 0) this.y = canvas.height;
+        if (this.y > canvas.height) this.y = 0;
+    }
+
+    draw() {
+        ctx.fillStyle = document.body.classList.contains("dark")
+            ? "rgba(34, 197, 94, 0.9)"
+            : "rgba(22, 163, 74, 0.5)";
+
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+
+        ctx.bezierCurveTo(
+            this.x + this.size, this.y - this.size,
+            this.x + this.size * 2, this.y + this.size,
+            this.x, this.y + this.size * 2
+        );
+
+        ctx.bezierCurveTo(
+            this.x - this.size * 2, this.y + this.size,
+            this.x - this.size, this.y - this.size,
+            this.x, this.y
+        );
+
+        ctx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    for (let i = 0; i < 80; i++) {
+        particles.push(new Particle());
+    }
+}
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let p of particles) {
+        p.update();
+        p.draw();
+    }
+
+    requestAnimationFrame(animateParticles);
+}
+
+initParticles();
+animateParticles();
+
+/* ===== REST OF YOUR ORIGINAL CODE (UNCHANGED) ===== */
+
 function toggleTheme(){
     document.body.classList.toggle("dark");
 
@@ -237,7 +329,6 @@ window.onload = () => {
     }
 };
 
-/* ===== LOGIN ===== */
 async function login(){
     const res = await fetch('/login',{
         method:'POST',
@@ -265,7 +356,6 @@ async function logout(){
     location.reload();
 }
 
-/* ===== EMAIL ===== */
 async function saveEmail(){
     const email = document.getElementById('alertEmail').value;
 
@@ -278,16 +368,13 @@ async function saveEmail(){
     alert("Email saved ✔");
 }
 
-/* ===== SEARCH FIX ===== */
 let searchTimeout;
 document.getElementById("searchBox").addEventListener("keyup",()=>{
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(fetchData,300);
 });
 
-/* ===== FETCH DATA ===== */
 async function fetchData(){
-
     const res = await fetch('/live');
     const data = await res.json();
 
@@ -314,9 +401,7 @@ async function fetchData(){
 
         card.innerHTML = `
         <div class="device-title">${d.device}</div>
-
         <div style="display:flex; align-items:center; gap:12px;">
-
             <div>
                 <div class="label">⚡ CPU</div>
                 <div class="value">${d.cpu_usage.toFixed(1)}%</div>
@@ -334,7 +419,6 @@ async function fetchData(){
             <div style="width:110px; height:110px;">
                 <canvas id="pie_${id}"></canvas>
             </div>
-
         </div>
 
         <div class="badge ${d.power_watts>70?'high':'normal'}">
@@ -344,11 +428,11 @@ async function fetchData(){
 
         grid.appendChild(card);
 
-        const ctx = document.getElementById(`pie_${id}`).getContext('2d');
+        const ctx2 = document.getElementById(`pie_${id}`).getContext('2d');
 
         if(window.pieCharts[id]) window.pieCharts[id].destroy();
 
-        window.pieCharts[id] = new Chart(ctx,{
+        window.pieCharts[id] = new Chart(ctx2,{
             type:'doughnut',
             data:{
                 labels:['CPU','Power','Energy','CO₂'],
@@ -380,12 +464,11 @@ async function fetchData(){
     lastUpdated.innerText = 'Last Updated: '+new Date().toLocaleTimeString();
 }
 
-/* ===== MAIN GRAPH ===== */
 async function loadGraph(){
     const res = await fetch('/graph');
     const data = await res.json();
 
-    const ctx = energyChart.getContext('2d');
+    const ctx3 = energyChart.getContext('2d');
 
     if(window.g) window.g.destroy();
 
@@ -394,7 +477,7 @@ async function loadGraph(){
         ds.push({label:d,data:data.devices[d],borderWidth:2});
     }
 
-    window.g = new Chart(ctx,{
+    window.g = new Chart(ctx3,{
         type:'line',
         data:{labels:data.labels,datasets:ds},
         options:{responsive:true}
